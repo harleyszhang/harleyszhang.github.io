@@ -1,9 +1,9 @@
-# [tw93.fun](https://tw93.fun)
+# [harleyszhang](https://harleyszhang-github-io.vercel.app/)
 
-- This is Tw93's front-end technology blog.
-- Commonly used to record learning and research front-end technology.
-- Concerned about new technology and new thinking.
-- The blog theme named [cosy-jekyll-theme](https://rubygems.org/gems/cosy-jekyll-theme) is created by [Tw93](https://tw93.fun/about/).
+- 🌱 我是一名深度学习推理部署工程师，会一点 python/c++/triton/cuda 编程
+- 🔭 从事过 LLM 推理部署、视觉算法开发、模型压缩部署以及算法SDK开发工作，终身学习践行者。
+- 💡 喜欢开源，相信长期主义，崇尚极简主义。
+- 🤔 正在寻求大模型推理部署的工作, 📫 联系我: zhg5200211@outlook.com
 
 ## Features
 
