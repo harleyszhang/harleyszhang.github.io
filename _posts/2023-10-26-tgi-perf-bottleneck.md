@@ -1,7 +1,7 @@
 ---
 layout: post
 title: tgi 性能瓶颈分析实验
-date: 2023-11-26 22:00:00
+date: 2023-10-26 22:00:00
 summary: TGI 动态性能测试实验分析
 categories: LLM_Infer
 ---
