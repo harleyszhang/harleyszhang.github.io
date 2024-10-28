@@ -46,11 +46,15 @@
   {% endif %}
 
   {% if page.layout == "post" %}
-  <!-- Vercel Analytics -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PL13W62QF9"></script>
   <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PL13W62QF9');
   </script>
-  <script defer src="/_vercel/insights/script.js"></script>
 
   <!-- KaTeX CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-..." crossorigin="anonymous">
