@@ -31,11 +31,11 @@ categories: Backbone
 
 `CSPNet` 和不同 `backbone` 结合后的效果如下图所示。
 
-![和分类backbone结合后的效果](../../images/CSPNet/和分类backbone结合后的效果.png)
+![和分类backbone结合后的效果](../images/CSPNet/the_effect_after_combining_with_the_classification_backbone.png)
 
 和目标检测网络结合后的效果如下图所示。
 
-![和目标检测网络结合后的效果](../../images/CSPNet/和目标检测网络结合后的效果.png)
+![和目标检测网络结合后的效果](../images/CSPNet/the_effect_after_combining_with_the_target_detection_network.png)
 
 `CSPNet` 提出主要是为了解决三个问题：
 
@@ -57,7 +57,7 @@ categories: Backbone
 
 1，**DenseNet**
 
-![DenseNet的密集层权重更新公式](../../images/CSPNet/DenseNet的密集层权重更新公式.png)
+![DenseNet的密集层权重更新公式](../images/CSPNet/densenet_s_dense_layer_weight_update_formula.png)
 
 其中 $f$ 为权值更新函数，$g_i$ 为传播到第 $i$ 个密集层的梯度。从公式 (2) 可以发现，大量的度信息被重用来更新不同密集层的权值，这将导致无差异的密集层反复学习复制的梯度信息。
 
@@ -65,7 +65,7 @@ categories: Backbone
 
 作者提出的 `CSPDenseNet` 的单阶段的架构如图 2(b) 所示。`CSPDenseNet` 的一个阶段是由局部密集块和局部过渡层组成（`a partial dense block and a partial transition layer`）。
 
-![DenseNet和CSPDenseNet结构图](../../images/CSPNet/DenseNet和CSPDenseNet结构图.png)
+![DenseNet和CSPDenseNet结构图](../images/CSPNet/densenet_and_cspdensenet_structure_diagram.png)
 
 总的来说，作者提出的 CSPDenseNet 保留了 DenseNet 重用特征特性的优点，但同时通过**截断梯度流**防止了过多的重复梯度信息。该思想通过设计一种分层的特征融合策略来实现，并应用于局部过渡层（partial transition layer）。
 
@@ -81,7 +81,7 @@ categories: Backbone
 
 **设计局部过渡层的目的是使梯度组合的差异最大**。局部过渡层是一种层次化的特征融合机制，它利用梯度流的聚合策略来防止不同的层学习重复的梯度信息。在这里，我们设计了两个 `CSPDenseNet` 变体来展示这种梯度流截断是如何影响网络的学习能力的。
 
-![Figure3](../../images/CSPNet/Figure3.png)
+![Figure3](../images/CSPNet/Figure3.png)
 
 Transition layer 的含义和 DenseNet 类似，是一个 1x1 的卷积层（没有再使用 `average pool`）。上图中 `transition layer` 的位置决定了梯度的结构方式，并且各有优势：
 
@@ -89,13 +89,13 @@ Transition layer 的含义和 DenseNet 类似，是一个 1x1 的卷积层（没
 - (d) 图 **Fusion Last** 的方式，先将部分特征输入 Transition layer，然后再进行concatenate，这样**梯度信息将被截断**，损失了部分的梯度重用，但是由于 Transition 的输入维度比（c）图少，大大减少了计算复杂度。
 - (b) 图中的结构是论文 `CSPNet` 所采用的，其结合了 (c)、(d) 的特点，提升了学习能力的同时也提高了一些计算复杂度。 作者在论文中给出其使用不同 Partial Transition Layer 的实验结果，如下图所示。具体使用哪种结构，我们可以根据条件和使用场景进行调整。
 
-![不同Transition-layer的对比实验](../../images/CSPNet/不同Transition-layer的对比实验.png)
+![不同Transition-layer的对比实验](../images/CSPNet/comparative_experiments_of_different_transition_layers.png)
 
 5，**Apply CSPNet to Other Architectures.**
 
 将 `CSP` 应用到 `ResNeXt` 或者 `ResNet` 的残差单元后的结构图如下所示：
 
-![Figure5](../../images/CSPNet/Figure5.png)
+![Figure5](../images/CSPNet/Figure5.png)
 
 ### 3.2，Exact Fusion Model
 
@@ -103,7 +103,7 @@ Transition layer 的含义和 DenseNet 类似，是一个 1x1 的卷积层（没
 
 提出了 `EFM` 结构能够更好地聚集初始特征金字塔。
 
-![FPN-GFM-EFM结构图](../../images/CSPNet/FPN-GFM-EFM结构图.png)
+![FPN-GFM-EFM结构图](../images/CSPNet/fpn_gfm_efm_structure_diagram.png)
 
 ## 4，实验
 
@@ -115,7 +115,7 @@ Transition layer 的含义和 DenseNet 类似，是一个 1x1 的卷积层（没
 
 EFM 在 COCO 数据集上的消融实验结果。
 
-![EFM上的消融实验结果](../../images/CSPNet/EFM上的消融实验结果.png)
+![EFM上的消融实验结果](../images/CSPNet/ablation_experiment_results_on_efm.png)
 
 ### 4.3，实验总结
 
