@@ -17,9 +17,7 @@
     "min": "uglifyjs ./js/index.js -o ./js/index.min.js  --comments all"
   },
   "devDependencies": {
-    "uglify-js": "^2.7.5"
-  },
-  "dependencies": {
+    "uglify-js": "^2.7.5",
     "@vercel/analytics": "^1.3.2"
   }
 }
