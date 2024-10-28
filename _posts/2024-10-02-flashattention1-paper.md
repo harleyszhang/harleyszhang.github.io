@@ -273,7 +273,7 @@ $$S = QK^T \in R^{N\times N}, P = softmax(S\bigodot 1_{\tilde{m}}) \in \mathbb{R
 S\bigodot 1_{\tilde{M}} = S_{kl} \quad \tilde{M}_{kl} = 1 \\ \nonumber
 -\infty \quad M_{kl} = 0 \end{matrix}\right.$$
 
-本文要求 $\tilde{M}$ 具有块形式：对于某些块大小 $B_r，B_c$，对于所有的 $k, l$，都有 $\tilde{M}_{kl} = M_{ij}$，其中 $i = \left \lfloor k/B_r \right \rfloor, j = \left \lfloor l/B_c \right \rfloor$，对于某些 $M\in {0, 1}^{N/B_r\times N/B_c}$。
+本文要求 $\tilde{M}$ 具有块形式：对于某些块大小 $B_r，B_c$，对于所有的 $k, l$，都有 $\tilde{M}_{kl} = M_{ij}$，其中 $i = \left\lfloor \frac{k}{B_r} \right\rfloor$，$j = \left\lfloor \frac{l}{B_c} \right\rfloor$，对于某些 $M \in \{0, 1\}^{N/B_r \times N/B_c}$。
 
 给定预定义的块稀疏掩码矩阵 $M\in {0, 1}^{N/B_r\times N/B_c}$，本文可以轻松地调整算法1，只计算注意力矩阵的非零块。该算法与算法 1 相同，只是本文会跳过零块部分。本文在附录B中的算法5中重现了算法描述。本文还分析了块稀疏 FlashAttention 的 IO 复杂性。
 

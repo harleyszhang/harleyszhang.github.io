@@ -1,7 +1,7 @@
 ---
 layout: post
 title: llm 并行策略概述
-date: 2023-07-01 22:00:00
+date: 2023-06-16 22:00:00
 summary: 简单介绍 llm 张量并行、数据并行的原理。
 categories: LLM_Infer
 ---
