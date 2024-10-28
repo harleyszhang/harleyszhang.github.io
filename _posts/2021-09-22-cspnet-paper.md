@@ -2,7 +2,7 @@
 layout: post
 title: cspnet 论文解读
 date: 2021-09-22 22:00:00
-summary: CSPNet 是作者 Chien-Yao Wang 于 2019 发表的论文 CSPNET: A NEW BACKBONE THAT CAN ENHANCE LEARNING CAPABILITY OF CNN。也是对 DenseNet 网络推理效率低的改进版本。
+summary: CSPNet 是作者 Chien-Yao Wang 于 2019 发表的论文 CSPNET:A NEW BACKBONE THAT CAN ENHANCE LEARNING CAPABILITY OF CNN。也是对 DenseNet 网络推理效率低的改进版本。
 categories: Backbone
 ---
 
