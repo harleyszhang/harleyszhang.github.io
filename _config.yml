@@ -61,7 +61,7 @@ plugins:
   - jekyll-pdf-embed
   - jekyll-sitemap
   - jekyll-feed
-  - jekyll-katex # 或者 'jekyll-katex'
+  - jekyll-mathjax # 或者 'jekyll-katex'
 
 # Custom Site Settings
 showBuyCoffee: true
