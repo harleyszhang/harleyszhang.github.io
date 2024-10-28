@@ -1,3 +1,11 @@
+---
+layout: post
+title: transformer论文解读
+date: 2024-09-01 20:00:00
+summary: 学习 b 站李沐视频总结的 transformer 论文解读笔记
+categories: Transformer
+---
+
 - [1. 相关工作](#1-相关工作)
 - [2. 模型架构](#2-模型架构)
 - [3. 如何理解 Layer Norm](#3-如何理解-layer-norm)
