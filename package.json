@@ -1,13 +1,13 @@
 {
-  "name": "tw93",
-  "author": "Tw93<tw93@qq.com>",
-  "homepage": "https://tw93.fun",
+  "name": "harleyszhang",
+  "author": "harleyszhang<zhg5200211@outlook.com>",
+  "homepage": "https://harleyszhang-github-io.vercel.app/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tw93/tw93.github.io"
+    "url": "https://github.com/harleyszhang/harleyszhang.github.io"
   },
   "bugs": {
-    "url": "https://github.com/tw93/tw93.github.io/issues"
+    "url": "https://github.com/harleyszhang/harleyszhang.github.io/issues"
   },
   "scripts": {
     "prep": "gem install bundler && bundle install",
