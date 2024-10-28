@@ -12,7 +12,7 @@ GEM
     execjs (2.10.0)
     ffi (1.16.3)
     forwardable-extended (2.6.0)
-    google-protobuf (3.25.2)
+    google-protobuf (3.25.5)
     http_parser.rb (0.8.0)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
@@ -119,10 +119,10 @@ PLATFORMS
 DEPENDENCIES
   jekyll
   jekyll-feed
-  jekyll-katex
   jekyll-paginate
   jekyll-pdf-embed
   jekyll-sitemap
+  jekyll-mathjax-rails
 
 BUNDLED WITH
    2.5.6
