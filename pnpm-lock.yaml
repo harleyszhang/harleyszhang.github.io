@@ -11,6 +11,8 @@ importers:
       uglify-js:
         specifier: ^2.7.5
         version: 2.8.29
+      @vercel/analytics: 
+      specifier: ^1.3.2
 
 packages:
   vercel/analytics@1.3.2:
