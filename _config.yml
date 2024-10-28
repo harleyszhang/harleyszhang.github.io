@@ -61,9 +61,24 @@ plugins:
   - jekyll-pdf-embed
   - jekyll-sitemap
   - jekyll-feed
+  - jekyll-katex # 或者 'jekyll-katex'
 
 # Custom Site Settings
 showBuyCoffee: true
 payImage: //gw.alipayobjects.com/zos/k/vb/1.png
 assetUrl: //tw93.fun/images/
 defaultImage: data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+
+katex:
+  cdn: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  config: |
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        ignoreHtmlClass: ".*",
+        processHtmlClass: "arithmatex"
+      }
+    };
