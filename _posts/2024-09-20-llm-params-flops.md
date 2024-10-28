@@ -1,3 +1,11 @@
+---
+layout: post
+title: llm 参数量-计算量-显存占用分析
+date: 2024-09-20 20:00:00
+summary: 本文分析的是采用 decoder-only 框架的 llm（类 gpt 的大语言模型）的参数量 params、计算量 FLOPs、理论所需 CPU 内存和 GPU 显存。
+categories: Transformer
+---
+
 - [一 KV cache 原理](#一-kv-cache-原理)
 	- [1.1 背景知识](#11-背景知识)
 	- [1.2 kv cache 原理](#12-kv-cache-原理)

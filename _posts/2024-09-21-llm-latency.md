@@ -1,3 +1,11 @@
+---
+layout: post
+title: llm 推理 latency 分析
+date: 2024-09-21 20:00:00
+summary: 考虑基于 roofline 模型和的 llm decode 阶段的 latency 分析，对于小 batch 的模型推理，单个 token 的推理 latency 可能受限于 gpu 的内存带宽，即内存读取时间 > 计算时间；对于大 batch，单个 token 的推理 latency 受限于 gpu 的算力，即内存读取时间 > 计算时间。
+categories: Transformer
+---
+
 - [一 decode latency 估算](#一-decode-latency-估算)
 - [二 理论 latency 和实际 latency 的差距](#二-理论-latency-和实际-latency-的差距)
 - [三 批次大小对性能影响的分析](#三-批次大小对性能影响的分析)

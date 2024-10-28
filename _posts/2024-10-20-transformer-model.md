@@ -1,3 +1,10 @@
+---
+layout: post
+title: transformer 模型结构详解及实现
+date: 2024-10-20 20:00:00
+summary: transformer 模型结构代码如何实现，模型结构分析。
+categories: Transformer
+---
 
 - [一 前言](#一-前言)
   - [1.1 Transformer 简要发展史](#11-transformer-简要发展史)

@@ -1,3 +1,11 @@
+---
+layout: post
+title: Sinusoida 位置编码详解
+date: 2024-10-26 20:00:00
+summary: Sinusoida 位置编码也叫三角函数位置编码，由 transformer 论文提出。位置编码的意义是用于表示序列中某个元素的位置，它为每个位置分配一个独特的表示。
+categories: Transformer
+---
+
 - [一 Sinusoidal 位置编码](#一-sinusoidal-位置编码)
   - [1.1 位置编码概述](#11-位置编码概述)
     - [正弦函数](#正弦函数)
