@@ -70,9 +70,9 @@ assetUrl: //tw93.fun/images/
 defaultImage: data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 
 katex:
-  cdn: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  cdn: "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"
   config: |
-    MathJax = {
+    KaTeX = {
       tex: {
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
