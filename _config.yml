@@ -1,23 +1,21 @@
 # Site Information
-title: Tw93
-description: "一个喜欢开源和折腾的工程师"
-url: https://tw93.fun
-repo: tw93/tw93.github.io
+title: Zhang
+description: "从事 LLM 推理部署、视觉算法开发、模型压缩部署以及算法SDK开发工作，终身学习践行者。"
+url: https://harleyszhang-github-io.vercel.app/
+repo: harleyszhang/harleyszhang.github.io
 lang: zh-CN
 timezone: Africa/El_Aaiun
 
 # Social Media and External URLs
-github: tw93
-zhihu: tw93
-twitter: HiTw93
-v2ex: tw93
+github: harleyszhang
+zhihu: tang-fen-44-49
 menu:
   - title: "Categories"
     url: "/categories.html"
   - title: "About"
     url: "/about.html"
   - title: "Weekly"
-    url: "https://weekly.tw93.fun/"
+    url: "https://zhg-weekly.vercel.app/"
 
 # SEO and Analytics
 google_analytics: G-KS7EDB6BRM
