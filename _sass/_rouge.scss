@@ -10,6 +10,9 @@
 		padding: 0.7em;
 		line-height: 1.0; /* 设置行高为 1.2 */
     @include font-rem(14);
+	code {
+        line-height: 1.2; /* 如果需要，也可以在 code 中设置 */
+    }
   }
 	.lineno { padding-right: 24px; color: #8f908a;}
 	.hll { background-color: #49483e }
