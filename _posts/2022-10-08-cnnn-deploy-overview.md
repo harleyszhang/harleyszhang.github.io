@@ -83,13 +83,15 @@ categories: CNN_Deploy
 
 ## 三，不同硬件平台量化方式总结
 
-| 芯片厂商 | 芯片型号 | 支持方式 | 支持精度 | 量化方式/范围 |量化工具|
-| ------ | -------- | ------ | ------ | ----------- |--------|
-| 华为     | Hisi系列3519A/3559A/3516C等|  整网编译|int16/int8 |非线性(对数) 量化 |nnie_mapper|
-|Ambarella|CV22/CV25|整网编译|int8/int16|支持权重激活选择不同的位宽量化、自动搜索最优的量化策略|工具链CNNGen 的 Parsers|
-|Nvidia|全系列GPU|整网编译/CUDA C|fp32/fp16/int8/int4/int1|`TensorRT`: 非对称 KL 散度 + `per-channel/per-layer` 量化|`TensorRT` 框架|
-|Qualcomm|全系列 SoC	|整网编译|fp32/fp16/int8|**非对称最大最小值量化** + `per-layer` 量化|AIMET 模型量化压缩工具|
-|Rockchips|RV1108/RV1109/RV1126等|整网编译|`int16/int8`|非对称量化/混合量化|RKNN Toolkit2|
+![不同硬件平台量化方式总结](../images/deploy_summary/quant_summary.jpg)
+
+| 芯片厂商  | 芯片型号                    | 支持方式        | 支持精度                 | 量化方式/范围                                             | 量化工具                |
+| --------- | --------------------------- | --------------- | ------------------------ | --------------------------------------------------------- | ----------------------- |
+| 华为      | Hisi系列3519A/3559A/3516C等 | 整网编译        | int16/int8               | 非线性(对数) 量化                                         | nnie_mapper             |
+| Ambarella | CV22/CV25                   | 整网编译        | int8/int16               | 支持权重激活选择不同的位宽量化、自动搜索最优的量化策略    | 工具链CNNGen 的 Parsers |
+| Nvidia    | 全系列GPU                   | 整网编译/CUDA C | fp32/fp16/int8/int4/int1 | `TensorRT`: 非对称 KL 散度 + `per-channel/per-layer` 量化 | `TensorRT` 框架         |
+| Qualcomm  | 全系列 SoC                  | 整网编译        | fp32/fp16/int8           | **非对称最大最小值量化** + `per-layer` 量化               | AIMET 模型量化压缩工具  |
+| Rockchips | RV1108/RV1109/RV1126等      | 整网编译        | `int16/int8`             | 非对称量化/混合量化                                       | RKNN Toolkit2           |
 
 NVIDIA 的 `TensorRT` 框架在对权值(weights) 的量化上支持 `per-tensor`(也叫 per-layer) 和 `per-channel` 两种方式，采用**对称最大值**的方法；对于激活值(activations) 只支持 per-tensor 的方式，采用 `KL-divergence` 的方法进行量化。
 
