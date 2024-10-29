@@ -172,22 +172,22 @@ x_q &= x_f \div x_s + x_{zero}
 ### 2.2，量化算术
 
 量化的一个重要问题是**如何用量化算术表示非量化算术**，在支持量化模型推理的推理框架中，就是指量化 `kernel`（INT8 Kernel） 如何实现，用于替代常规神经网络的 FP32 计算。量化算术表示的原理和浮点乘法过程非常相似。
-> 量化 kernel 代码可能会涉及到反量化过程，也就是如何将 `INT8` 的定点数据反量化成 `FP32` 的浮点数据**。
+> 量化 kernel 代码可能会涉及到反量化过程，也就是如何将 `INT8` 的定点数据反量化成 `FP32` 的浮点数据。
 
 下面的等式 5-10 是量化（定点）乘法替代非量化（非定点）乘法的计算过程。
 
 $$\begin{align}
 z_{float} & = x_f \cdot y_{f} \\
-z_{scale} \cdot (z_q - z_{zero})
+z_{s} \cdot (z_q - z_{zero})
 & = (x_s \cdot (x_q - x_{zero})) \cdot
 (y_s \cdot (y_q - y_{zero})) \\
 z_q - z_{zero}
-&= \frac{x_s \cdot y_s}{z_{scale}} \cdot
+&= \frac{x_s \cdot y_s}{z_{s}} \cdot
 (x_q - x_{zero}) \cdot (y_q - y_{zero}) \\
 z_q
-&= \frac{x_s \cdot y_s}{z_{scale}} \cdot
+&= \frac{x_s \cdot y_s}{z_{s}} \cdot
 (x_q - x_{zero}) \cdot (y_q - y_{zero}) + z_{zero} \\
-\alpha &= \frac{x_s \cdot y_s}{z_{scale}} \\
+\alpha &= \frac{x_s \cdot y_s}{z_{s}} \\
 z_q
 &= \alpha \cdot (x_q - x_{zero}) \cdot
 (y_q - y_{zero}) + z_{zero} \\
@@ -195,7 +195,7 @@ z_q
 
 > 等式：量化乘法运算。
 
-对于给定神经网络，在完成 fp32 模型量化成 int8 模型之后，输入 $x$、权重 $y$ 和输出 $z$ 的缩放因子 $scale$ 肯定是已知的，因此等式 14 的 $\alpha = \frac{x_s y_s}{z_{scale}}$ 也是已知且是 `FP32` 常数，在量化 kernel 运行之前提前计算好的。对于等式 `10` 可以应用的大多数情况，**$quantized$ 和 $zero\_point$ 的变量 $(x,y)$ 都是 `INT8` 类型，$scale$ 是 `FP32`**。
+对于给定神经网络，在完成 fp32 模型量化成 int8 模型之后，输入 $x$、权重 $y$ 和输出 $z$ 的缩放因子 $scale$ 肯定是已知的，因此等式 14 的 $\alpha = \frac{x_s y_s}{z_{s}}$ 也是已知且是 `FP32` 常数，在量化 kernel 运行之前提前计算好的。对于等式 `10` 可以应用的大多数情况，**$quantized$ 和 $zero\_point$ 的变量 $(x,y)$ 都是 `INT8` 类型，$scale$ 变量是 `FP32`**。
 
 由此，可知除了 $\alpha$ 和 $(x_q - x_{zero})\cdot (y_q - y_{zero})$ 之间的乘法外，等式 10 中的其他运算都是量化运算。
 
