@@ -1,7 +1,7 @@
 ---
 layout: post
 title: cnn 基础部件-激活函数详解
-date: 2022-11-05 22:00:00
+date: 2022-12-05 22:00:00
 summary: 本文分析了激活函数对于神经网络的必要性，同时讲解了几种常见的激活函数的原理，并给出相关公式、代码和示例图。
 categories: DeepLearning
 ---
