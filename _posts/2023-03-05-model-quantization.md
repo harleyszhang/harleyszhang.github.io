@@ -76,7 +76,7 @@ categories: Model_Compression
 
 #### 1.2.1，PTQ 理解
 
-`PTQ` `Post Training Quantization` 是训练后量化，也叫做离线量化，根据量化零点 $x_{zero\_point}$ 是否为 `0`，训练后量化分为对称量化和非对称量化；根据数据通道顺序 `NHWC`(TensorFlow) 这一维度区分，训练后量化又分为逐层量化和逐通道量化。目前 `nvidia` 的 `TensorRT` 框架中使用了逐层量化的方法，每一层采用同一个阈值来进行量化。逐通道量化就是对每一层每个通道都有各自的阈值，对精度可以有一个很好的提升。
+`PTQ` `Post Training Quantization` 是训练后量化，也叫做离线量化，根据量化零点 $x_{zero}$ 是否为 `0`，训练后量化分为对称量化和非对称量化；根据数据通道顺序 `NHWC`(TensorFlow) 这一维度区分，训练后量化又分为逐层量化和逐通道量化。目前 `nvidia` 的 `TensorRT` 框架中使用了逐层量化的方法，每一层采用同一个阈值来进行量化。逐通道量化就是对每一层每个通道都有各自的阈值，对精度可以有一个很好的提升。
 
 ### 1.3，量化的分类
 
@@ -136,17 +136,18 @@ $$(-1)^s \times M \times 2^k$$
 
 根据偏移量 $Z$ 是否为 0，可以将浮点数的线性量化分为两类-对称量化和非对称量化。
 
-当浮点值域落在 $(-1,1)$ 之间，权重浮点数据的量化运算可使用下式的方法将 FP32 映射到 INT8，这是**对称量化**。其中 $x_{float}$ 表示 FP32 权重， $x_{quantized}$ 表示量化的 INT8 权重值（整数），$x_{scale}$ 是缩放因子（映射因子、量化尺度（范围）/ `float32` 的缩放因子）。
+当浮点值域落在 $(-1,1)$ 之间，权重浮点数据的量化运算可使用下式的方法将 FP32 映射到 INT8，这是**对称量化**。其中 $x_f$ 表示 FP32 权重， $x_q$ 表示量化的 INT8 权重值（整数），$x_s$ 是缩放因子（映射因子、量化尺度（范围）/ `float32` 的缩放因子）。
+> $x_s$ 表示缩放因子$x_{scale}$, $x_f$ 表示浮点数 $x_{float}$, $x_q$ 表示量化值 $x_{quantized}$, $x_{zero}$ 表示量化零点（量化偏移）$x_{zero\_point}$。
 
-$$x_{float} = x_{scale} \times x_{quantized}$$
+$$x_f = x_s \times x_q$$
 
-对称量化的浮点值和 `8` 位定点值的映射关系如下图，从图中可以看出，对称量化就是将一个 `tensor` 中的 $\left[ -max(|x|),max(|x|) \right]$ 内的 `FP32` 值分别映射到 `8 bit` 数据的 `[-128, 127]` 的范围内，中间值按照线性关系进行映射，称这种映射关系是对称量化。可以看出，对称量化的浮点值和量化值范围都是相对于零对称的。
+对称量化的浮点值和 `8` 位定点值的映射关系如下图，从图中可以看出，对称量化就是将一个 `tensor` 中的 $\left[-max(\left[x\right]),max(\left[x\right])\right]$ 内的 `FP32` 值分别映射到 `8 bit` 数据的 `[-128, 127]` 的范围内，中间值按照线性关系进行映射，称这种映射关系是对称量化。可以看出，对称量化的浮点值和量化值范围都是相对于零对称的。
 
 ![对称量化](../images/quantization/symmetric_quantization.png)
 
-因为对称量化的缩放方法可能会将 FP32 零映射到 INT8 零，但我们不希望这种情况出现，于是出现了数字信号处理中的均一量化，即**非对称量化**。数学表达式如下所示，其中 $x_{zero\_point}$ 表示量化零点（量化偏移）。
+因为对称量化的缩放方法可能会将 FP32 零映射到 INT8 零，但我们不希望这种情况出现，于是出现了数字信号处理中的均一量化，即**非对称量化**。数学表达式如下所示，其中 $x_{zero}$ 表示量化零点（量化偏移）。
 
-$$x_{float} = x_{scale} \times (x_{quantized} - x_{zero\_point})$$
+$$x_f = x_s \times (x_q - x_{zero})$$
 
 大多数情况下量化是选用无符号整数，即 `INT8` 的值域就为 $[0,255]$ ，这种情况，显然要用非对称量化。非对称量化的浮点值和 `8` 位定点值的映射关系如下图：
 
@@ -154,17 +155,17 @@ $$x_{float} = x_{scale} \times (x_{quantized} - x_{zero\_point})$$
 
 总的来说，**权重量化浮点值可以分为两个步骤**：
 
-1. 通过在权重张量（Tensor）中找到 $min$ 和 $max$ 值从而确定 $x_{scale}$ 和$x_{zero\_point}$。
+1. 通过在权重张量（Tensor）中找到 $min$ 和 $max$ 值从而确定 $x_s$ 和$x_{zero}$。
 2. 将权重张量的每个值从 FP32 转换为 INT8。
   
 $$\begin{align}
-x_{float} &\in [x_{float}^{min}, x_{float}^{max}] \\
-x_{scale} &= \frac{x_{float}^{max} - x_{float}^{min}}{x_{quantized}^{max} - x_{quantized}^{min}} \\
-x_{zero\_point} &= x_{quantized}^{max} - x_{float}^{max} \div x_{scale} \\
-x_{quantized} &= x_{float} \div x_{scale} + x_{zero\_point}
+x_f &\in [x_f^{min}, x_f^{max}] \\
+x_s &= \frac{x_f^{max} - x_f^{min}}{x_q^{max} - x_q^{min}} \\
+x_{zero} &= x_q^{max} - x_f^{max} \div x_s \\
+x_q &= x_f \div x_s + x_{zero}
 \end{align}$$
 
-注意，当浮点运算结果不等于整数时，需要**额外的舍入步骤**。例如将 FP32 值域 [−1,1] 映射到 INT8 值域 [0,255]，有 $x_{scale}=\frac{2}{255}$，而$x_{zero\_point}= 255−\frac{255}{2}≈127$。
+注意，当浮点运算结果不等于整数时，需要**额外的舍入步骤**。例如将 FP32 值域 [−1,1] 映射到 INT8 值域 [0,255]，有 $x_s=\frac{2}{255}$，而$x_{zero}= 255−\frac{255}{2}≈127$。
 
 注意，量化过程中存在误差是不可避免的，就像数字信号处理中量化一样。**非对称算法一般能够较好地处理数据分布不均匀的情况**。
 
@@ -176,31 +177,31 @@ x_{quantized} &= x_{float} \div x_{scale} + x_{zero\_point}
 下面的等式 5-10 是量化（定点）乘法替代非量化（非定点）乘法的计算过程。
 
 $$\begin{align}
-z_{float} & = x_{float} \cdot y_{float} \\
-z_{scale} \cdot (z_{quantized} - z_{zero\_point})
-& = (x_{scale} \cdot (x_{quantized} - x_{zero\_point})) \cdot
-(y_{scale} \cdot (y_{quantized} - y_{zero\_point})) \\
-z_{quantized} - z_{zero\_point}
-&= \frac{x_{scale} \cdot y_{scale}}{z_{scale}} \cdot
-(x_{quantized} - x_{zero\_point}) \cdot (y_{quantized} - y_{zero\_point}) \\
-z_{quantized}
-&= \frac{x_{scale} \cdot y_{scale}}{z_{scale}} \cdot
-(x_{quantized} - x_{zero\_point}) \cdot (y_{quantized} - y_{zero\_point}) + z_{zero\_point} \\
-\alpha &= \frac{x_{scale} \cdot y_{scale}}{z_{scale}} \\
-z_{quantized}
-&= \alpha \cdot (x_{quantized} - x_{zero\_point}) \cdot
-(y_{quantized} - y_{zero\_point}) + z_{zero\_point} \\
+z_{float} & = x_f \cdot y_{f} \\
+z_{scale} \cdot (z_q - z_{zero})
+& = (x_s \cdot (x_q - x_{zero})) \cdot
+(y_s \cdot (y_q - y_{zero})) \\
+z_q - z_{zero}
+&= \frac{x_s \cdot y_s}{z_{scale}} \cdot
+(x_q - x_{zero}) \cdot (y_q - y_{zero}) \\
+z_q
+&= \frac{x_s \cdot y_s}{z_{scale}} \cdot
+(x_q - x_{zero}) \cdot (y_q - y_{zero}) + z_{zero} \\
+\alpha &= \frac{x_s \cdot y_s}{z_{scale}} \\
+z_q
+&= \alpha \cdot (x_q - x_{zero}) \cdot
+(y_q - y_{zero}) + z_{zero} \\
 \end{align}$$
 
 > 等式：量化乘法运算。
 
-对于给定神经网络，在完成 fp32 模型量化成 int8 模型之后，输入 $x$、权重 $y$ 和输出 $z$ 的缩放因子 $scale$ 肯定是已知的，因此等式 14 的 $\alpha = \frac{x_{scale}y_{scale}}{z_{scale}}$ 也是已知且是 `FP32` 常数，在量化 kernel 运行之前提前计算好的。对于等式 `10` 可以应用的大多数情况，**$quantized$ 和 $zero\_point$ 的变量 $(x,y)$ 都是 `INT8` 类型，$scale$ 是 `FP32`**。
+对于给定神经网络，在完成 fp32 模型量化成 int8 模型之后，输入 $x$、权重 $y$ 和输出 $z$ 的缩放因子 $scale$ 肯定是已知的，因此等式 14 的 $\alpha = \frac{x_s y_s}{z_{scale}}$ 也是已知且是 `FP32` 常数，在量化 kernel 运行之前提前计算好的。对于等式 `10` 可以应用的大多数情况，**$quantized$ 和 $zero\_point$ 的变量 $(x,y)$ 都是 `INT8` 类型，$scale$ 是 `FP32`**。
 
-由此，可知除了 $\alpha$ 和 $(x_{quantized} - x_{zero\_point})\cdot (y_{quantized} - y_{zero\_point})$ 之间的乘法外，等式 10 中的其他运算都是量化运算。
+由此，可知除了 $\alpha$ 和 $(x_q - x_{zero})\cdot (y_q - y_{zero})$ 之间的乘法外，等式 10 中的其他运算都是量化运算。
 
-另外，两个 `INT8` 之间的算术运算会累加到 `INT16` 或 `INT32`，这时 `INT8` 的值域可能无法保存运算结果。例如，对于 $x_{quantized}=20$、$x_{zero\_point} = 50$ 的情况，有 $(x_{quantized} − x_{zero\_point}) = −30$ 超出 `INT8` 值范围 $[0,255]$。
+另外，两个 `INT8` 之间的算术运算会累加到 `INT16` 或 `INT32`，这时 `INT8` 的值域可能无法保存运算结果。例如，对于 $x_q=20$、$x_{zero} = 50$ 的情况，有 $(x_q − x_{zero}) = −30$ 超出 `INT8` 值范围 $[0,255]$。
 
-数据类型转换可能将 $\alpha \cdot (x_{quantized} - x_{zero\_point}) \cdot (y_{quantized} - y_{zero\_point})$ 转换为 INT32 或 INT16，结合 $ + z_{zero\_point}$ 一起可以确保计算结果几乎全部落入 INT8 值域 [0,255] 中。
+数据类型转换可能将 $\alpha \cdot (x_q - x_{zero}) \cdot (y_q - y_{zero})$ 转换为 INT32 或 INT16，结合 $ + z_{zero}$ 一起可以确保计算结果几乎全部落入 INT8 值域 [0,255] 中。
 
 对于以上情况，在工程中，比如对于卷积算子的计算，`sum(x*y)` 的结果需要用 INT32 保存，同时，`b` 值一般也是 `INT32` 格式的，之后再 `requantize` (重新量化)成 `INT8`。
 
@@ -218,7 +219,7 @@ z_{quantized}
 
 采用普通量化方法时，靠近零的浮点值在量化时没有精确地用定点值表示。因此，与原始网络相比，量化网络一般会有明显的精度损失。对于线性（均匀）量化，这个问题是不可避免的。
 
-同时值映射的精度是受由 $x_{float}^{min}$ 和 $x_{float}^{max}$ 得到的 $x_{scale}$ 显著影响的。并且，如图十所示，权重中邻近 $x_{float}^{min}$ 和 $x_{float}^{max}$ 附近的值通常是可忽略的，其实就等同于**映射关系中浮点值的 `min` 和 `max` 值是可以通过算法选择的**。
+同时值映射的精度是受由 $x_f^{min}$ 和 $x_f^{max}$ 得到的 $x_s$ 显著影响的。并且，如图十所示，权重中邻近 $x_f^{min}$ 和 $x_f^{max}$ 附近的值通常是可忽略的，其实就等同于**映射关系中浮点值的 `min` 和 `max` 值是可以通过算法选择的**。
 
 ![图十将浮点量化为定点时调整最小值-最大值](../images/quantization/figure_10_adjusting_the_minimum_maximum_value_when_quantizing_floating_point_to_fixed_point.jpg)
 > 图十将浮点量化为定点时调整最小值-最大值。
