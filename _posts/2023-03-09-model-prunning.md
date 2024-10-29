@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 模型压缩-神经网络量化基础
+title: 模型压缩-剪枝算法详解
 date: 2023-03-09 19:00:00
 summary: 模型剪枝是一种应用非常广的模型压缩方法，其可以直接减少模型中的参数量。本文会对模型剪枝的定义、发展历程、分类以及算法原理进行详细的介绍。
 categories: Model_Compression
@@ -234,14 +234,14 @@ $$
 
 ## 参考资料
 
-- [1]:[Learning both Weights and Connections for Efficient](https://arxiv.org/pdf/1506.02626.pdf)
-- [2]:[Rectified Linear Units Improve Restricted Boltzmann Machines](https://www.cs.toronto.edu/~hinton/absps/reluICML.pdf)
-- [3]:[ImageNet Classification with Deep Convolutional](https://proceedings.neurips.cc/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf)
-- [4]:[Network Trimming: A Data-Driven Neuron Pruning Approach towards Efficient Deep Architectures](https://arxiv.org/pdf/1607.03250.pdf)
-- [5]:[Deep Gradient Compression: Reducing the Communication Bandwidth for Distributed Training](https://arxiv.org/abs/1712.01887)
-- [6]:[韩松博士毕业论文-EFFICIENT METHODS AND HARDWARE FOR DEEP LEARNING](https://stacks.stanford.edu/file/druid:qf934gh3708/EFFICIENT%20METHODS%20AND%20HARDWARE%20FOR%20DEEP%20LEARNING-augmented.pdf)
-- [7]:[Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/pdf/1708.06519.pdf)
-- [8]: [第1章 结构化剪枝综述](https://cs.nju.edu.cn/wujx/paper/Pruning_Survey_MLA21.pdf)
-- [9]: [Neural network pruning with residual-connections and limited-data](https://arxiv.org/pdf/1911.08114.pdf)
-- [10]: [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/file/6c9882bbac1c7093bd25041881277658-Paper.pdf)
-- [11]: [AI-System: 11.3 模型压缩与硬件加速](https://github.com/microsoft/AI-System/blob/main/Textbook/%E7%AC%AC11%E7%AB%A0-%E6%A8%A1%E5%9E%8B%E5%8E%8B%E7%BC%A9%E4%B8%8E%E5%8A%A0%E9%80%9F/11.3-%E6%A8%A1%E5%9E%8B%E5%8E%8B%E7%BC%A9%E4%B8%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F.md)
+- [Learning both Weights and Connections for Efficient](https://arxiv.org/pdf/1506.02626.pdf)
+- [Rectified Linear Units Improve Restricted Boltzmann Machines](https://www.cs.toronto.edu/~hinton/absps/reluICML.pdf)
+- [ImageNet Classification with Deep Convolutional](https://proceedings.neurips.cc/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf)
+- [Network Trimming: A Data-Driven Neuron Pruning Approach towards Efficient Deep Architectures](https://arxiv.org/pdf/1607.03250.pdf)
+- [Deep Gradient Compression: Reducing the Communication Bandwidth for Distributed Training](https://arxiv.org/abs/1712.01887)
+- [韩松博士毕业论文-EFFICIENT METHODS AND HARDWARE FOR DEEP LEARNING](https://stacks.stanford.edu/file/druid:qf934gh3708/EFFICIENT%20METHODS%20AND%20HARDWARE%20FOR%20DEEP%20LEARNING-augmented.pdf)
+- [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/pdf/1708.06519.pdf)
+- [第1章 结构化剪枝综述](https://cs.nju.edu.cn/wujx/paper/Pruning_Survey_MLA21.pdf)
+- [Neural network pruning with residual-connections and limited-data](https://arxiv.org/pdf/1911.08114.pdf)
+- [Optimal Brain Damage](https://proceedings.neurips.cc/paper/1989/file/6c9882bbac1c7093bd25041881277658-Paper.pdf)
+- [AI-System: 11.3 模型压缩与硬件加速](https://github.com/microsoft/AI-System/blob/main/Textbook/%E7%AC%AC11%E7%AB%A0-%E6%A8%A1%E5%9E%8B%E5%8E%8B%E7%BC%A9%E4%B8%8E%E5%8A%A0%E9%80%9F/11.3-%E6%A8%A1%E5%9E%8B%E5%8E%8B%E7%BC%A9%E4%B8%8E%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F.md)
