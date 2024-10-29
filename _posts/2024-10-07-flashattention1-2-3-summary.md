@@ -367,7 +367,7 @@ O'_{r,c, i} &= \sum_{j=1}^i \frac{e^{S_{r, j} - M_{r, i}}}{D'_{r, i}} * V[j, c] 
 &= O'_{r,c, i-1} * \frac{e^{M_{r,i-1} - M_{r,i}} * D'_{r, i-1}}{D'_{r, i}} + \frac{e^{S_{r, i} - M_{r, i}}}{D'_{r,i}} * V[i, c] 
 \end{aligned}$$
 
-可以看到 $O'_{r,c, i}$ 仅仅和 $O'_{r,c, i-1}$ 以及 ${S_{r, i}、M_{r,i-1}、D'_{r,i-1}}$ 有关，不需要“规约”操作，这些变量都是可以在同一个 for 循环中计算得到的，即我们可以像 online softmax 那样在一个 $[i, N]$ 的循环中完成计算：
+可以看到 $O'_{r, c, i}$ 仅仅和 $O'_{r, c, i-1}$ 以及 $S_{r, i}$、$M_{r, i-1}$、$D'_{r, i-1}$ 有关，不需要“规约”操作。这些变量都是可以在同一个 `for` 循环中计算得到的，即我们可以像 `onlinesoftmax` 那样在一个 $[i, N]$ 的循环中完成计算：
 
 $$\begin{aligned}
 S_{r, i} &= \sum^{Dim}_{j=1}Q[r, j]K[j, i]\\
@@ -569,32 +569,207 @@ FlashAttention-v1 其实并没有提出新的算法和网络结构上的优化�
 
 `FlashAttention` 算法实现步骤如下所示。
 
-$\text{算法 1 FlashAttention} \\
-要求：矩阵\; Q, K, V \in \mathbb{R}^{N \times d}  \;存储在\;\text{HBM}（高带宽内存）中，片上\;\text{SRAM}\;大小为\;M. \\$
-
-$1: 设置块大小\;B_c = \left\lceil \frac{M}{4d} \right\rceil ,  B_r = \min \left(\left\lceil \frac{M}{4d} \right\rceil , d\right). \\
-2: 初始化\;O = (0)_{N \times d} \in \mathbb{R}^{N \times d} ,  \ell = (0)_N \in \mathbb{R}^N ,  m = (-\infty)_N \in \mathbb{R}^N\;存储在\; \text{HBM} 中. \\
-3: 将 \;Q\;分成\; T_r = \left\lceil \frac{N}{B_r} \right\rceil \;块 Q_1, \dots, Q_{T_r}，每块大小为\;B_r\times d；将\;K, V\;分为\; T_c = \left\lceil \frac{N}{B_c} \right\rceil \;块\; K_1, \dots, K_{T_c} \;和\; V_1, \dots, V_{T_c}，每块大小为\; B_c \times d. \\
-4: 将 \;O\;分为\;T_r\; 块\;O_1, \dots, O_{T_r}，每块大小为 \;B_r\times d，将 \;\ell\;分为\;T_r\;块 \ell_1, \dots, \ell_{T_r}，将\; m \;分为\;T_r\;块 m_1, \dots, m_{T_r}，每块大小为\;B_r. \\
-5: for \;1 \leq j \leq T_c\;\text{do} \\
-6: \quad 从\;\text{HBM} 加载\;K_j, V_j\;到片上 \;\text{SRAM}. \\
-7: \quad for \; 1 \leq i \leq T_r\; \text{do} \\
-8: \quad \quad 从 \; \text{HBM}\; 加载 \; Q_i, O_i, \ell_i, m_i \;到片上\; \text{SRAM}. \\
-9: \quad \quad 在片上计算\; S_{ij} = Q_i K_j^T \in \mathbb{R}^{B_r \times B_c}. \\
-10: \quad \quad 在片上计算\; \tilde{m}_{ij} = \text{rowmax}(S_{ij}) \in \mathbb{R}^{B_r} ， \tilde{P}_{ij} = \exp(S_{ij} - \tilde{m}_{ij}) \in \mathbb{R}^{B_r \times B_c} （逐元素操作），计算\; \tilde{\ell}_{ij} = \text{rowsum}(\tilde{P}{ij}) \in \mathbb{R}^{B_r}. \\
-11: \quad \quad 在片上计算\; m_i^{\text{new}} = \max(m_i, \tilde{m}_{ij}) \in \mathbb{R}^{B_r} ， \ell_i^{\text{new}} = e^{m_i - m_i^{\text{new}}} \ell_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{\ell}_{ij} \in \mathbb{R}^{B_r}. \\
-12: \quad \quad 将\; O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} (\text{diag}(\ell_i) e^{m_{i} - m_i^{\text{new}}}O_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{P}_{ij} V_j) \; 写回到\; \text{HBM}. \\
-13: \quad \quad 将\; \ell_i \leftarrow \ell_i^{\text{new}}, m_i \leftarrow m_i^{\text{new}} \;写回到\; \text{HBM}. \\
-14: \quad \text{end for} \\
-15: \text{end for} \\
-16: 返回\; O$
+$$
+\begin{array}{l}
+\text{算法 1 FlashAttention} \\
+\text{要求：矩阵 } Q, K, V \in \mathbb{R}^{N \times d} \text{ 存储在 HBM（高带宽内存）中，片上 SRAM 大小为 } M. \\
+1: \quad \text{设置块大小 } B_c = \left\lceil \frac{M}{4d} \right\rceil ,\quad  B_r = \min \left(\left\lceil \frac{M}{4d} \right\rceil , d\right). \\
+2: \quad \text{初始化 } O = (0)_{N \times d} \in \mathbb{R}^{N \times d},\quad \ell = (0)_N \in \mathbb{R}^N,\quad m = (-\infty)_N \in \mathbb{R}^N \text{ 存储在 HBM 中}. \\
+3: \quad \text{将 } Q \text{ 分成 } T_r = \left\lceil \frac{N}{B_r} \right\rceil \text{ 块 } Q_1, \dots, Q_{T_r}, \text{ 每块大小为 } B_r \times d; \\
+   \quad \text{将 } K, V \text{ 分为 } T_c = \left\lceil \frac{N}{B_c} \right\rceil \text{ 块 } K_1, \dots, K_{T_c} \text{ 和 } V_1, \dots, V_{T_c}, \text{ 每块大小为 } B_c \times d. \\
+4: \quad \text{将 } O \text{ 分为 } T_r \text{ 块 } O_1, \dots, O_{T_r}, \text{ 每块大小为 } B_r \times d, \text{ 将 } \ell \text{ 分为 } T_r \text{ 块 } \ell_1, \dots, \ell_{T_r}, \\
+   \quad \text{将 } m \text{ 分为 } T_r \text{ 块 } m_1, \dots, m_{T_r}, \text{ 每块大小为 } B_r. \\
+5: \quad \text{for } 1 \leq j \leq T_c \text{ do} \\
+6: \quad\quad \text{从 HBM 加载 } K_j, V_j \text{ 到片上 SRAM}. \\
+7: \quad\quad \text{for } 1 \leq i \leq T_r \text{ do} \\
+8: \quad\quad\quad \text{从 HBM 加载 } Q_i, O_i, \ell_i, m_i \text{ 到片上 SRAM}. \\
+9: \quad\quad\quad \text{在片上计算 } S_{ij} = Q_i K_j^T \in \mathbb{R}^{B_r \times B_c}. \\
+10: \quad\quad\quad \text{在片上计算 } \tilde{m}_{ij} = \text{rowmax}(S_{ij}) \in \mathbb{R}^{B_r},\quad \tilde{P}_{ij} = \exp(S_{ij} - \tilde{m}_{ij}) \in \mathbb{R}^{B_r \times B_c} \text{ （逐元素操作）}, \\
+   \quad\quad\quad \text{计算 } \tilde{\ell}_{ij} = \text{rowsum}(\tilde{P}_{ij}) \in \mathbb{R}^{B_r}. \\
+11: \quad\quad\quad \text{在片上计算 } m_i^{\text{new}} = \max(m_i, \tilde{m}_{ij}) \in \mathbb{R}^{B_r},\quad \ell_i^{\text{new}} = e^{m_i - m_i^{\text{new}}} \ell_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{\ell}_{ij} \in \mathbb{R}^{B_r}. \\
+12: \quad\quad\quad \text{将 } O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} \left(\text{diag}(\ell_i) e^{m_i - m_i^{\text{new}}} O_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{P}_{ij} V_j\right) \text{ 写回到 HBM}. \\
+13: \quad\quad\quad \text{将 } \ell_i \leftarrow \ell_i^{\text{new}},\quad m_i \leftarrow m_i^{\text{new}} \text{ 写回到 HBM}. \\
+14: \quad\quad \text{end for} \\
+15: \quad \text{end for} \\
+16: \quad \text{return } O
+\end{array}
+$$
 
 ![flash attention 算法步骤](../images/flash_attention/flash_attention_algorithm1.png)
 
 上面的是纯 python 代码，下面我们继续优化，利用 triton 框架写出极度优化的  FlashAttention-1 内核代码。
 
 ```python
+@triton.jit
+def flash_attention_v1_kernel(
+    q_ptr,
+    k_ptr,
+    v_ptr,
+    o_ptr,
 
+    q_batch_stride,
+    q_heads_stride,
+    q_seq_stride,
+    q_dim_stride,
+
+    k_batch_stride,
+    k_heads_stride,
+    k_seq_stride,
+    k_dim_stride, # matrix Q stride for columns, [seq_len, head_dim]
+
+    v_batch_stride,
+    v_heads_stride,
+    v_seq_stride,
+    v_dim_stride,
+
+    out_batch_stride,
+    out_heads_stride,
+    out_seq_stride,
+    out_dim_stride,
+
+    n_heads,      # number of heads
+    m_size,
+    n_size,       # sequence length of k, also be rows of K matrix
+    BLOCK_DHEAD_SIZE: tl.constexpr, # head_dim dimension
+    BLOCK_M_SIZE: tl.constexpr, # BLOCK size of m_size dimension，即 Q 矩阵行数分成了m_size // BLOCK_M_SIZE 块，块大小是 BLOCK_M_SIZE
+    BLOCK_N_SIZE: tl.constexpr, # n_size dimension
+    sm_scale,
+    ):
+    """
+    针对 prefill 阶段的 attention, 所以忽略了添加 mask 过程
+    """
+    block_m_idx = tl.program_id(0)
+    head_idx = tl.program_id(1)
+
+    cur_batch_idx = head_idx // n_heads
+    cur_head_idx = head_idx % n_heads
+
+    m_range_offs = tl.arange(0, BLOCK_M_SIZE)
+    n_range_offs = tl.arange(0, BLOCK_N_SIZE)
+    dhead_range_offs = tl.arange(0, BLOCK_DHEAD_SIZE)
+
+    m_offs = block_m_idx * BLOCK_M_SIZE + m_range_offs
+
+    # Compute offsets for the first block on matrix Q K V Output
+    q_offs = ( 
+        cur_batch_idx * q_batch_stride 
+        + cur_head_idx * q_heads_stride
+        + (m_offs[:, None] * q_seq_stride + dhead_range_offs[None,:] * q_dim_stride))
+
+    k_offs = (
+        cur_batch_idx * k_batch_stride 
+        + cur_head_idx * k_heads_stride
+        + (n_range_offs[:,None] * k_seq_stride + dhead_range_offs[None,:] * k_dim_stride))
+    
+    v_offs = ( 
+        cur_batch_idx * v_batch_stride 
+        + cur_head_idx * v_heads_stride
+        + (n_range_offs[:,None] * v_seq_stride + dhead_range_offs[None,:] * v_dim_stride))
+
+    o_offs = ( 
+        cur_batch_idx * out_batch_stride 
+        + cur_head_idx * out_heads_stride
+        + (m_offs[:,None] * out_seq_stride + dhead_range_offs[None,:] * out_dim_stride))
+    
+    q_ptrs = q_ptr + q_offs
+    k_ptrs = k_ptr + k_offs
+    v_ptrs = v_ptr + v_offs
+    out_ptrs = o_ptr + o_offs
+
+    # 初始化用于计算 softmax 归一化项的 m 和 d, 意义见 online-softmax, 这里
+    l_i = tl.zeros((BLOCK_M_SIZE,), dtype=tl.float32) - float("inf")
+    d_i = tl.zeros((BLOCK_M_SIZE,), dtype=tl.float32)
+    acc = tl.zeros((BLOCK_M_SIZE, BLOCK_DHEAD_SIZE), dtype=tl.float32)
+    
+    q_mask = m_offs[:, None] < m_size
+    q = tl.load(q_ptrs, mask=q_mask, other=0.0)
+
+    for block_n_start_idx in range(0, n_size, BLOCK_N_SIZE):
+        block_n_offs = block_n_start_idx + n_range_offs
+        k_mask = block_n_offs[:, None] < n_size
+        k = tl.load(k_ptrs + block_n_start_idx * k_seq_stride, mask=k_mask, other=0.0)
+        
+        qk = tl.zeros((BLOCK_M_SIZE, BLOCK_N_SIZE), dtype=tl.float32)
+        qk += tl.dot(q, tl.trans(k))
+        qk *= sm_scale
+
+        l_j = tl.max(qk, 1)
+        numerators = tl.exp(qk - l_j[:, None])
+        d_j = tl.sum(numerators, 1) # 1d vector
+
+        l_new = tl.maximum(l_i, l_j)
+        alpha = tl.exp(l_i - l_new)
+        beta = tl.exp(l_j - l_new)
+        d_new = alpha * d_i  + beta * d_j
+        
+        # compute softmax(qk)
+        p_scale = beta / d_new
+        p = numerators * p_scale[:, None]
+        # acc scaling
+        sigma = d_i / d_new * alpha
+        acc = acc * sigma[:, None]
+        
+        # compute O = PV
+        v = tl.load(v_ptrs + block_n_start_idx * v_seq_stride, mask=k_mask, other=0.0)
+        p = p.to(q_ptr.dtype.element_ty)
+
+        acc += tl.dot(p, v)
+
+        # update the normalizer (l and d) for next iteration
+        l_i = l_new
+        d_i = d_new
+    
+    out_mask = m_offs[:, None] < m_size
+    tl.store(out_ptrs, acc, mask=out_mask)
+
+@torch.no_grad()
+@custom_fwd(cast_inputs=torch.float16)
+def flash_attention_v1(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    sm_scale,
+    attention_mask: Optional[torch.Tensor] = None,
+    ):
+    """Compute Flash-attention, can't support fp32 input
+    参数:
+        q: Query tensor, shape: [bs, n_heads, m_size, head_dim], decode 阶段, q 的 seq_len 和 k v 不一致, 其值为 1
+        k: Key tensor,  shape: [bs, n_heads, n_size, head_dim]. 
+        v: Value tensor, shape is consistent with k. 
+        output: Attention ouput tensor, shape is consistent with q. 
+        attention_mask: Attention mask matrix broadcastable to (batch, head_size, m_size, n_size).
+    """
+    output = torch.empty_like(q)
+    assert q.shape[-1] == k.shape[-1] == v.shape[-1]
+    assert (
+            q.dtype == k.dtype == v.dtype == output.dtype
+        ), f"All tensors must have the same dtype: {q.dtype}, {k.dtype}, {v.dtype}, {output.dtype}"
+    
+    # sequence length of q, also be rows of Q matrix
+    bs, n_heads, m_size, head_dim = q.size()
+    n_size = k.shape[2]
+    # sm_scale = 1 / math.sqrt(head_dim)
+    # BLOCK_M_SIZE = 128
+    grid = lambda meta: (triton.cdiv(m_size, meta["BLOCK_M_SIZE"]), bs*n_heads, 1) # 二维 grid
+
+    flash_attention_v1_kernel[grid](
+        q,
+        k,
+        v, 
+        output,
+        *q.stride(),  # (batch, heads, m_size, head_dim)
+        *k.stride(),  # (batch, heads, n_size, head_dim)
+        *v.stride(),  # (batch, heads, n_size, head_dim)
+        *output.stride(),  # (batch, heads, m_size, n_size)
+        n_heads,
+        m_size,
+        n_size,
+        head_dim,
+        64,  # BLOCK_M_SIZE
+        64,  # BLOCK_N_SIZE
+        sm_scale
+    )
+    return output
 ```
 
 ## 3. FlashAttention-2

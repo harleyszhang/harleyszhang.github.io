@@ -115,7 +115,7 @@ self-attention 算子涉及到的和 HBM 数据传输过程如上图所示，很
 
 **1，Tiling.** 本文**按块计算注意力**。因为 `Softmax` 将 $K$ 的列关联在一起，因此本文对大规模的 `softmax` 进行分解，并进行缩放 [51, 60, 66]。为了数值稳定性，向量 $x\in \mathbb{R}^B$ 的 softmax 计算方式如下：
 
-$$m(x) := \underset{i}{max}\; x_i,\quad\ f(x) := [e^{x_1 - m(x)}\ ...\ e^{x_B - m(x)}],\quad \ell(x) := \sum_i f(x)_i,\quad softmax(x) := \frac{f(x)}{\ell(x)} .$$
+$$m(x) := \underset{i}{max}\; x_i,\; f(x) := [e^{x_1 - m(x)}\ ...\ e^{x_B - m(x)}],\; \ell(x) := \sum_i f(x)_i,\; softmax(x) := \frac{f(x)}{\ell(x)} .$$
 
 
 对于**向量** $x^{(1)}, x^{(2)} \in \mathbb{R}^{B}$，本文可以将拼接后的向量 $x=\left[x^{(1)}\ x^{(2)}\right] \in \mathbb{R}^{2 B}$ 的 softmax 表示为：
@@ -135,25 +135,31 @@ m(x)=m\left(\left[x^{(1)}\ x^{(2)}\right]\right)=\max \left(m\left(x^{(1)}\right
 
 `FlashAttention` 算法实现步骤如下所示。
 
-$\text{算法 1 FlashAttention} \\
-要求：矩阵\; Q, K, V \in \mathbb{R}^{N \times d}  \;存储在\;\text{HBM}（高带宽内存）中，片上\;\text{SRAM}\;大小为\;M. \\$
-
-$1: 设置块大小\;B_c = \left\lceil \frac{M}{4d} \right\rceil ,  B_r = \min \left(\left\lceil \frac{M}{4d} \right\rceil , d\right). \\
-2: 初始化\;O = (0)_{N \times d} \in \mathbb{R}^{N \times d} ,  \ell = (0)_N \in \mathbb{R}^N ,  m = (-\infty)_N \in \mathbb{R}^N\;存储在\; \text{HBM} 中. \\
-3: 将 \;Q\;分成\; T_r = \left\lceil \frac{N}{B_r} \right\rceil \;块 Q_1, \dots, Q_{T_r}，每块大小为\;B_r\times d；将\;K, V\;分为\; T_c = \left\lceil \frac{N}{B_c} \right\rceil \;块\; K_1, \dots, K_{T_c} \;和\; V_1, \dots, V_{T_c}，每块大小为\; B_c \times d. \\
-4: 将 \;O\;分为\;T_r\; 块\;O_1, \dots, O_{T_r}，每块大小为 \;B_r\times d，将 \;\ell\;分为\;T_r\;块 \ell_1, \dots, \ell_{T_r}，将\; m \;分为\;T_r\;块 m_1, \dots, m_{T_r}，每块大小为\;B_r. \\
-5: for \;1 \leq j \leq T_c\;\text{do} \\
-6: \quad 从\;\text{HBM} 加载\;K_j, V_j\;到片上 \;\text{SRAM}. \\
-7: \quad for \; 1 \leq i \leq T_r\; \text{do} \\
-8: \quad \quad 从 \; \text{HBM}\; 加载 \; Q_i, O_i, \ell_i, m_i \;到片上\; \text{SRAM}. \\
-9: \quad \quad 在片上计算\; S_{ij} = Q_i K_j^T \in \mathbb{R}^{B_r \times B_c}. \\
-10: \quad \quad 在片上计算\; \tilde{m}_{ij} = \text{rowmax}(S_{ij}) \in \mathbb{R}^{B_r} ， \tilde{P}_{ij} = \exp(S_{ij} - \tilde{m}_{ij}) \in \mathbb{R}^{B_r \times B_c} （逐元素操作），计算\; \tilde{\ell}_{ij} = \text{rowsum}(\tilde{P}{ij}) \in \mathbb{R}^{B_r}. \\
-11: \quad \quad 在片上计算\; m_i^{\text{new}} = \max(m_i, \tilde{m}_{ij}) \in \mathbb{R}^{B_r} ， \ell_i^{\text{new}} = e^{m_i - m_i^{\text{new}}} \ell_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{\ell}_{ij} \in \mathbb{R}^{B_r}. \\
-12: \quad \quad 将\; O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} (\text{diag}(\ell_i) e^{m_{i} - m_i^{\text{new}}}O_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{P}_{ij} V_j) \; 写回到\; \text{HBM}. \\
-13: \quad \quad 将\; \ell_i \leftarrow \ell_i^{\text{new}}, m_i \leftarrow m_i^{\text{new}} \;写回到\; \text{HBM}. \\
-14: \quad \text{end for} \\
-15: \text{end for} \\
-16: 返回\; O$
+$$
+\begin{array}{l}
+\text{算法 1 FlashAttention} \\
+\text{要求：矩阵 } Q, K, V \in \mathbb{R}^{N \times d} \text{ 存储在 HBM（高带宽内存）中，片上 SRAM 大小为 } M. \\
+1: \quad \text{设置块大小 } B_c = \left\lceil \frac{M}{4d} \right\rceil ,\quad  B_r = \min \left(\left\lceil \frac{M}{4d} \right\rceil , d\right). \\
+2: \quad \text{初始化 } O = (0)_{N \times d} \in \mathbb{R}^{N \times d},\quad \ell = (0)_N \in \mathbb{R}^N,\quad m = (-\infty)_N \in \mathbb{R}^N \text{ 存储在 HBM 中}. \\
+3: \quad \text{将 } Q \text{ 分成 } T_r = \left\lceil \frac{N}{B_r} \right\rceil \text{ 块 } Q_1, \dots, Q_{T_r}, \text{ 每块大小为 } B_r \times d; \\
+   \quad \text{将 } K, V \text{ 分为 } T_c = \left\lceil \frac{N}{B_c} \right\rceil \text{ 块 } K_1, \dots, K_{T_c} \text{ 和 } V_1, \dots, V_{T_c}, \text{ 每块大小为 } B_c \times d. \\
+4: \quad \text{将 } O \text{ 分为 } T_r \text{ 块 } O_1, \dots, O_{T_r}, \text{ 每块大小为 } B_r \times d, \text{ 将 } \ell \text{ 分为 } T_r \text{ 块 } \ell_1, \dots, \ell_{T_r}, \\
+   \quad \text{将 } m \text{ 分为 } T_r \text{ 块 } m_1, \dots, m_{T_r}, \text{ 每块大小为 } B_r. \\
+5: \quad \text{for } 1 \leq j \leq T_c \text{ do} \\
+6: \quad\quad \text{从 HBM 加载 } K_j, V_j \text{ 到片上 SRAM}. \\
+7: \quad\quad \text{for } 1 \leq i \leq T_r \text{ do} \\
+8: \quad\quad\quad \text{从 HBM 加载 } Q_i, O_i, \ell_i, m_i \text{ 到片上 SRAM}. \\
+9: \quad\quad\quad \text{在片上计算 } S_{ij} = Q_i K_j^T \in \mathbb{R}^{B_r \times B_c}. \\
+10: \quad\quad\quad \text{在片上计算 } \tilde{m}_{ij} = \text{rowmax}(S_{ij}) \in \mathbb{R}^{B_r},\quad \tilde{P}_{ij} = \exp(S_{ij} - \tilde{m}_{ij}) \in \mathbb{R}^{B_r \times B_c} \text{ （逐元素操作）}, \\
+   \quad\quad\quad \text{计算 } \tilde{\ell}_{ij} = \text{rowsum}(\tilde{P}_{ij}) \in \mathbb{R}^{B_r}. \\
+11: \quad\quad\quad \text{在片上计算 } m_i^{\text{new}} = \max(m_i, \tilde{m}_{ij}) \in \mathbb{R}^{B_r},\quad \ell_i^{\text{new}} = e^{m_i - m_i^{\text{new}}} \ell_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{\ell}_{ij} \in \mathbb{R}^{B_r}. \\
+12: \quad\quad\quad \text{将 } O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} \left(\text{diag}(\ell_i) e^{m_i - m_i^{\text{new}}} O_i + e^{\tilde{m}_{ij} - m_i^{\text{new}}} \tilde{P}_{ij} V_j\right) \text{ 写回到 HBM}. \\
+13: \quad\quad\quad \text{将 } \ell_i \leftarrow \ell_i^{\text{new}},\quad m_i \leftarrow m_i^{\text{new}} \text{ 写回到 HBM}. \\
+14: \quad\quad \text{end for} \\
+15: \quad \text{end for} \\
+16: \quad \text{return } O
+\end{array}
+$$
 
 ![flash attention 算法步骤](../images/flash_attention/flash_attention_algorithm1.png)
 
@@ -165,13 +171,13 @@ $$O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} (\text{diag}(\ell_i) e^{m
 
 将矩阵版的 online-softmax 套进标准 Attention，这里的 Softmax 是对 $QK^T \in [N, N]$ 结果中的每一行做一维的 softmax。这里用大写 $M、D$ 表示最大、归一化项，它们的长度都为 $N$；$O\in [N,d]$ 表示注意力输出。计算公式如下：
 
-$$\begin{aligned}
-X_{r, i} &= \sum^{Dim}_{j=1}Q[r, j]K[j, i]\\
-M_{r, i} &= \max(M_{r, i-1}, X_{r, i}) \\
-D_{r, i}' &= D_{r, i-1}' * e^{M_{r, i-1} - M_{r, i}} + e^{X_{r, i}-M_{r, i}} \\
-Softmax_{r, i} &= \frac{e^{X_{r, i} - M_{r, L}}}{D_{r, L}'} \\
-O_{r, c} &= \sum^L_{i=1}(Softmax_{r, i} * V[i, c]) \\
-\end{aligned}
+$$\begin{align}
+X_{r, i} &= \sum^{Dim}_{j=1}Q[r, j]K[j, i] \nonumber \\
+M_{r, i} &= \max(M_{r, i-1}, X_{r, i}) \nonumber \\
+D_{r, i}' &= D_{r, i-1}' * e^{M_{r, i-1} - M_{r, i}} + e^{X_{r, i}-M_{r, i}} \nonumber \\
+Softmax_{r, i} &= \frac{e^{X_{r, i} - M_{r, L}}}{D_{r, L}'} \nonumber \\
+O_{r, c} &= \sum^L_{i=1}(Softmax_{r, i} * V[i, c]) \nonumber \\
+\end{align}
 $$
 
 对应代码如下：
@@ -206,7 +212,8 @@ def flashattn_0(q, k, v):
 
 这里 $softmax_i$ 和 $O_(r,c)$ 的计算是分在两个 kernel 内单独完成，即两次 for 循环，那么能不能通过一个 kernel(一个 for 循环) 计算完成呢？就像 online-softmax 那样。实际是可以的。
 
-$O_(r,c)$的计算是一个累加过程，拆开来看：
+$O_{(r,c)}$ 的计算是一个累加过程，拆开来看：
+
 $$
 \begin{aligned}
 SubSum_{r, c, i} &= SubSum_{r, c, i-1} + Softmax_{r, i} * V[i, c]\\
@@ -273,7 +280,7 @@ $$S = QK^T \in R^{N\times N}, P = softmax(S\bigodot 1_{\tilde{m}}) \in \mathbb{R
 S\bigodot 1_{\tilde{M}} = S_{kl} \quad \tilde{M}_{kl} = 1 \\ \nonumber
 -\infty \quad M_{kl} = 0 \end{matrix}\right.$$
 
-本文要求 $\tilde{M}$ 具有块形式：对于某些块大小 $B_r，B_c$，对于所有的 $k, l$，都有 $\tilde{M}_{kl} = M_{ij}$，其中 $i = \left\lfloor \frac{k}{B_r} \right\rfloor$，$j = \left\lfloor \frac{l}{B_c} \right\rfloor$，对于某些 $M \in \{0, 1\}^{N/B_r \times N/B_c}$。
+本文要求 $\tilde{M}$ 具有块形式：对于某些块大小 $B_r，B_c$，对于所有的 $k, l$，都有 $\tilde{M}_{kl} = M_{ij}$，其中 $i = \left\lfloor \frac{k}{B_r} \right\rfloor$，$j = \left\lfloor \frac{l}{B_c} \right\rfloor$，对于某些 $M \in \left \{0,1 \right\}^{N/B_r \times N/B_c}$。
 
 给定预定义的块稀疏掩码矩阵 $M\in {0, 1}^{N/B_r\times N/B_c}$，本文可以轻松地调整算法1，只计算注意力矩阵的非零块。该算法与算法 1 相同，只是本文会跳过零块部分。本文在附录B中的算法5中重现了算法描述。本文还分析了块稀疏 FlashAttention 的 IO 复杂性。
 
@@ -367,7 +374,8 @@ $$S = QK^T \in R^{N\times N}, P = \text{softmax}(S) \in R^{N\times N}, O = PV\in
 $$L_i = \sum_j e^{q_i^T k_j} \tag{1} $$
 
 设 $v_j$ 为矩阵 $V$ 的第 $j$ 列，则注意力输出矩阵的第 $i$ 列为：
-$$o_i = P_{i:}V = \sum_j P_{ij}v_j = \sum_j \frac{e^{q_i^T k_j}}{L_i}v_j \tag{2} $$
+
+$$o_i = P_{i:}V = \sum_j P_{ij}v_j = \sum_j \frac{e^{q_i^T k_j}}{L_i}v_j \tag{2}$$
 
 > 因为 $v_j$ 为矩阵 $V$ 的第 $j$ 列，所以对应的对注意力分数矩阵也要取第 $j$ 列。
 
@@ -401,31 +409,6 @@ $$
 
 完整的 `FlashAttention` 前向传播算法如下:
 
-$要求：矩阵 Q, K, V \in \mathbb{R}^{N \times d} \text{存储在 HBM 中，片上 SRAM 大小为}  M，\text{softmax 缩放常数}  \tau \in \mathbb{R} ，\text{掩码函数 MASK，dropout 概率} p_{\text{drop}}$
-
-$1: 初始化伪随机数生成器状态\; \mathcal{R} ，并保存到 HBM 中. \\
-2: 设置块大小\; B_c = \left\lceil \frac{M}{4d} \right\rceil ， B_r = \min \left(\left\lceil \frac{M}{4d} \right\rceil, d \right). \\
-3: 初始化\; O = (0)_{N \times d} \in \mathbb{R}^{N \times d}, \ell = (0)_N \in \mathbb{R}^N, m = (-\infty)_N \in \mathbb{R}^N ，存储在 HBM 中. \\
-4: 将\; Q\; 分成  T_r = \left\lceil \frac{N}{B_r} \right\rceil \; 块 Q_1, \dots, Q_{T_r}，每块大小为\; B_r \times d; 将\; K, V\; 分为\; T_c = \left\lceil \frac{N}{B_c} \right\rceil  块 K_1, \dots, K_{T_c}，每块大小为  B_c \times d. \\
-5: 将\; O\; 分为  T_r  块 O_1, \dots, O_{T_r}，每块大小为  B_r \times d ，将  \ell  分为  T_r  块 \ell_1, \dots, \ell_{T_r}，将\; m\; 分为\; T_r\; 块 m_1, \dots, m_{T_r}，每块大小为\; B_r\\
-6: for\; 1 \leq j \leq T_c  do \\
-7: \quad 从\; HBM\; 中加载\; K_j, V_j\; 到片上 SRAM 中. \\
-8: \quad for\; 1 \leq i \leq T_r  do \\
-9: \quad \quad 从\; HBM\; 加载\; Q_i, O_i, \ell_i, m_i\; 到片上 SRAM 中. \\
-10: \quad \quad 在片上计算\; S_{ij} = \tau Q_i K_j^\top \in \mathbb{R}^{B_r \times B_c}. \\
-11: \quad \quad 在片上计算\; S_{ij}^{\text{masked}} = \text{MASK}(S_{ij}). \\
-12: \quad \quad 在片上计算\; \tilde{m}{ij} = \text{rowmax}(S_{ij}^{\text{masked}}) \in \mathbb{R}^{B_r}，
-\tilde{P}{ij} = \exp(S_{ij}^{\text{masked}} - \tilde{m}{ij}) \in \mathbb{R}^{B_r \times B_c} （逐元素操作），
-\tilde{\ell}{ij} = \text{rowsum}(\tilde{P}_{ij}) \in \mathbb{R}^{B_r}. \\
-13.	\quad \quad 在片上计算\; m_i^{\text{new}} = \max(m_i, \tilde{m}{ij}) \in \mathbb{R}^{B_r} ，
-\ell_i^{\text{new}} = e^{m_i - m_i^{\text{new}}} \ell_i + e^{\tilde{m}{ij} - m_i^{\text{new}}} \tilde{\ell}_{ij} \in \mathbb{R}^{B_r}. \\
-14.	\quad \quad 在片上计算\; \tilde{P}{ij}^{\text{dropped}} = \text{dropout}(\tilde{P}{ij}, p_{\text{drop}}). \\
-15.	\quad \quad 将\; O_i \leftarrow \text{diag}(\ell_i^{\text{new}})^{-1} \left( \text{diag}(\ell_i) O_i + e^{\tilde{m}{ij} - m_i^{\text{new}}} \tilde{P}{ij}^{\text{dropped}} V_j \right)  写回 HBM. \\
-16.	\quad \quad 将\; \ell_i \leftarrow \ell_i^{\text{new}}, m_i \leftarrow m_i^{\text{new}} 写回\; HBM. \\
-17.	\quad \text{end for} \\
-18.	\text{end for} \\
-19.	返回\; O, \ell, m, \mathcal{R}$
-
 <img src="../images/flash_attention/full_flash_attention_pipeline.png" width="75%" alt="完整的 FlashAttention 前向传播算法">
 
 ### B.3 FlashAttention: 反向传播
@@ -441,6 +424,7 @@ FlashAttention 的反向传播做点两点改进：
 2. 在计算 $\text{softmax}$ 梯度时，我们使用公式 (4) 计算 $D_i = P_i^\top dP_i$，而不在大小为 $N$ 的 $P_i$ 和 $dP_i$ 上进行归约（它们可能无法放入 SRAM）。相反，我们可以将其重写为 $D_i = dO_i^\top O_i$，并计算大小为 $N$ 的向量之间的点积。
 
 完整的 FlashAttention 反向传播算法见算法 4。从概念上讲，它其实是附录 B.2 中推导的分块版本。
+
 <img src="../images/flash_attention/flashattention_bp.png" width="75%" alt="algorigthm4 FlashAttention Backward Pass">
 
 可以看出与前向传播类似，反向传播执行 $O(N^2)$ 的 `FLOPs`，并且只需要 $O(N)$ 的额外内存，除了输入和输出、输入和输出梯度之外。另外，FlashAttention 反向传播的 IO 复杂度，类似于前向传播（定理 2）。
