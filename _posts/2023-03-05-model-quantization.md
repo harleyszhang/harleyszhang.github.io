@@ -131,7 +131,7 @@ $$(-1)^s \times M \times 2^k$$
 
 值的注意的是，一般神经网络层权重的值分布范围很窄，非常接近零。图八给出了 `MobileNetV1` 中十层（拥有最多值的层）的权重分布。
 
-![十层 MobileNetV1 的权重分布](../images/quantization/十层%20MobileNetV1%20的权重分布.svg)
+![十层 MobileNetV1 的权重分布](../images/quantization/weight_distribution_of_ten_layer_mobilenetv1.svg)
 > 图八：十层 MobileNetV1 的权重分布。
 
 根据偏移量 $Z$ 是否为 0，可以将浮点数的线性量化分为两类-对称量化和非对称量化。
@@ -140,7 +140,7 @@ $$(-1)^s \times M \times 2^k$$
 
 $$x_{float} = x_{scale} \times x_{quantized}$$
 
-对称量化的浮点值和 `8` 位定点值的映射关系如下图，从图中可以看出，对称量化就是将一个 `tensor` 中的 $[-max(|\mathrm{x}|),max(|\mathrm{x}|)]$ 内的 `FP32` 值分别映射到 `8 bit` 数据的 `[-128, 127]` 的范围内，中间值按照线性关系进行映射，称这种映射关系是对称量化。可以看出，对称量化的浮点值和量化值范围都是相对于零对称的。
+对称量化的浮点值和 `8` 位定点值的映射关系如下图，从图中可以看出，对称量化就是将一个 `tensor` 中的 $\left [ -max(|\mathrm{x}|),max(|\mathrm{x}|)\right ]$ 内的 `FP32` 值分别映射到 `8 bit` 数据的 `[-128, 127]` 的范围内，中间值按照线性关系进行映射，称这种映射关系是对称量化。可以看出，对称量化的浮点值和量化值范围都是相对于零对称的。
 
 ![对称量化](../images/quantization/symmetric_quantization.png)
 
@@ -155,9 +155,9 @@ $$x_{float} = x_{scale} \times (x_{quantized} - x_{zero\_point})$$
 总的来说，**权重量化浮点值可以分为两个步骤**：
 
 1. 通过在权重张量（Tensor）中找到 $min$ 和 $max$ 值从而确定 $x_{scale}$ 和$x_{zero\_point}$。
-2. 将权重张量的每个值从 FP32 转换为 INT8 。
-$$
-\begin{align}
+2. 将权重张量的每个值从 FP32 转换为 INT8。
+  
+$$\begin{align}
 x_{float} &\in [x_{float}^{min}, x_{float}^{max}] \\
 x_{scale} &= \frac{x_{float}^{max} - x_{float}^{min}}{x_{quantized}^{max} - x_{quantized}^{min}} \\
 x_{zero\_point} &= x_{quantized}^{max} - x_{float}^{max} \div x_{scale} \\
@@ -191,6 +191,7 @@ z_{quantized}
 &= \alpha \cdot (x_{quantized} - x_{zero\_point}) \cdot
 (y_{quantized} - y_{zero\_point}) + z_{zero\_point} \\
 \end{align}$$
+
 > 等式：量化乘法运算。
 
 对于给定神经网络，在完成 fp32 模型量化成 int8 模型之后，输入 $x$、权重 $y$ 和输出 $z$ 的缩放因子 $scale$ 肯定是已知的，因此等式 14 的 $\alpha = \frac{x_{scale}y_{scale}}{z_{scale}}$ 也是已知且是 `FP32` 常数，在量化 kernel 运行之前提前计算好的。对于等式 `10` 可以应用的大多数情况，**$quantized$ 和 $zero\_point$ 的变量 $(x,y)$ 都是 `INT8` 类型，$scale$ 是 `FP32`**。
@@ -237,18 +238,19 @@ z_{quantized}
 ### 3.2，最大最小值（MinMax）
 
 `MinMax` 是使用最简单也是较为常用的一种采样方法。基本思想是直接从 `FP32` 张量中选取最大值和最小值来确定实际的动态范围，如下公式所示。
-$x_{min} = \left\{\begin{matrix}min(X) & if\ x_{min} = None \\  min(x_{min}, min(X))  & otherwise\end{matrix}\right.$
 
-$x_{max} = \left\{\begin{matrix}max(X) & if\ x_{max} = None \\  max(x_{max}, max(X))  & otherwise\end{matrix}\right.$
+$$x_{min} = \left\{\begin{matrix}min(X) & if\ x_{min} = None \\  min(x_{min}, min(X))  & otherwise\end{matrix}\right. \\
+x_{max} = \left\{\begin{matrix}max(X) & if\ x_{max} = None \\  max(x_{max}, max(X))  & otherwise\end{matrix}\right.$$
 
 对 `weights` 而言，这种采样方法是不饱和的，但是对于 `activation` 而言，如果采样数据中出现离群点，则可能明显扩大实际的动态范围，比如实际计算时 `99%` 的数据都均匀分布在 `[-100, 100]` 之间，但是在采样时有一个离群点的数值为 `10000`，这时候采样获得的动态范围就变成 `[-100, 10000]`。
 
 ### 3.3，滑动平均最大最小值(MovingAverageMinMax)
 
 与 `MinMax` 算法直接替换不同，MovingAverageMinMax 会采用一个超参数 `c` (Pytorch 默认值为0.01)逐步更新动态范围。
-$x_{min} = \left\{\begin{matrix}min(X) & if x_{min} = None \\ (1-c)x_{min}+c \; min(X) & otherwise\end{matrix}\right.$
 
-$x_{max} = \left\{\begin{matrix}max(X) & if x_{max} = None \\  (1-c)x_{max}+c \; max(X) & otherwise\end{matrix}\right.$
+$$x_{min} = \left\{\begin{matrix}min(X) & if x_{min} = None \\ (1-c)x_{min}+c \; min(X) & otherwise\end{matrix}\right.\\ 
+x_{max} = \left\{\begin{matrix}max(X) & if x_{max} = None \\  (1-c)x_{max}+c \; max(X) & otherwise\end{matrix}\right.$$
+
 这种方法获得的动态范围一般要小于实际的动态范围。对于 weights 而言，由于不存在采样的迭代，因此 MovingAverageMinMax 与 MinMax 的效果是一样的。
 
 ### 3.4，KL 距离采样方法(Kullback–Leibler divergence)
