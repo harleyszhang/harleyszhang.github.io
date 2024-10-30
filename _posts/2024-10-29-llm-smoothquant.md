@@ -224,4 +224,4 @@ W8A8 with negligible accuracy loss.">
 
 - [深入理解SmoothQuant量化技术](https://zhuanlan.zhihu.com/p/703928680)
 - [SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models](https://arxiv.org/pdf/2211.10438)
-- https://github.com/mit-han-lab/smoothquant
+- [https://github.com/mit-han-lab/smoothquant](https://github.com/mit-han-lab/smoothquant)
