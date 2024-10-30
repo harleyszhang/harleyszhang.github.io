@@ -98,6 +98,7 @@ $$\text{S = QK}^\text{T} \in \mathbb{R}^{N\times N},\quad \text{P = softmax(S)} 
 <div align="center">
 <img src="../images/flash_attention/standard_attention_imple.png" width="60%" alt="标准 attention算法">
 </div>
+
 > 3.2 节会对比标准注意力和 FlashAttention 的 HBM 访问代价和 FLOPs 的差别。
 
 标准的 `Attention` 运算大致可以描述为以下三个步骤：

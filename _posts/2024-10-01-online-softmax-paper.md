@@ -31,17 +31,21 @@ y_i = \frac{e^{x_i}}{d_V} \tag{1}$$
 其中，$x,y\in  \mathbb{R}^{V}$。朴素的 Softmax [算法 1] 实现需要对 $\mathbf{x}$ 进行二次内存访问，一次计算归一化项 $d_V$，另一次计算输出值 $y_i$，加上写输出结果 $y_i$，即**每个向量元素都需要进行三次内存访问：两次读取和一次写入**。
 > Softmax 函数中，分母的求和项被叫做归一化项 $d_V$，作用是将输入向量中每个元素 $e^{x_i}$ 变为比例较小的数值，保证它们的和为 1，从而符合概率的定义。
 
-$\text{算法 1 朴素 softmax} \\
-\begin{aligned}
-1: & \quad d_0 \leftarrow 0 \\
-2: & \quad \textbf{for} \ j \leftarrow 1, V \ \textbf{do} \\
-3: & \quad \quad d_j \leftarrow d_{j-1} + e^{x_j} \\
-4: & \quad \textbf{end for} \\
-5: & \quad \textbf{for} \ i \leftarrow 1, V \ \textbf{do} \\
-6: & \quad \quad y_i \leftarrow \frac{e^{x_i}}{d_V} \\
-7: & \quad \textbf{end for}
-\end{aligned}
-$
+**Algorithm 1 Naive softmax**
+
+$$
+\begin{array}{l}
+\hline
+1: \quad d_0 \leftarrow 0 \\
+2: \quad \textbf{for } j \leftarrow 1, V \textbf{ do} \\
+3: \quad \quad d_j \leftarrow d_{j-1} + e^{x_j} \\
+4: \quad \textbf{end for} \\
+5: \quad \textbf{for } i \leftarrow 1, V \textbf{ do} \\
+6: \quad \quad y_i \leftarrow \frac{e^{x_i}}{d_V} \\
+7: \quad \textbf{end for} \\
+\hline
+\end{array}
+$$
 
 在实际硬件上，由于表示对数字范围有限，算法 1 的第 3 行可能会因指数运算而发生溢出或下溢，因此目前通用的 Softmax 实现（更安全的形式）中为了防止数值溢出还需要再额外减掉一个 `max` 最大值：
 
@@ -49,22 +53,27 @@ $$m_V = \text{max}_{k}^{V} x_k \\
 d_j = d_{j - 1} + e^{x_j - m_V}; \quad d_V = \sum_j^{V} e^{(x_j -m_V)} \\
 y_i = \frac{e^{(x_i - m)}}{d_V } \tag{2}$$
 
-大部分深度学习框架都是采用这个更安全的朴素实现，算法流程见 [算法2]。但安全 Softmax 对输入向量进行了三次遍历：第一次计算最大值 $m_V$，第二次计算归一化项 $d_V$，第三次计算最终值 $y_i$，再加上将结果写回内存中，这导致**每个向量元素总共需要 `4` 次内存访问**，即原始的 Softmax 算法的内存访问（`MAC`）偏大，本文希望对此进行改进。
+大部分深度学习框架都是采用这个更安全的朴素实现，算法流程见 [算法2]。但安全 Softmax 对输入向量进行了三次遍历：第一次计算最大值 $m_V$，第二次计算归一化项 $d_V$，第三次计算最终值 $y_i$，再加上将结果写回内存中，这导致**每个向量元素总共需要 `4` 次内存访问**，即原始的 Softmax 算法的内存访问（`MAC`）偏大，论文对此进行改进。
 
-$\text{算法 2 安全 Softmax} \\
-\begin{aligned}
-1: & \quad m_0 \leftarrow -\infty \\
-2: & \quad \textbf{for} \ k \leftarrow 1, V \ \textbf{do} \\
-3: & \quad \quad m_k \leftarrow \max(m_{k-1}, x_k) \\
-4: & \quad \textbf{end for} \\
-5: & \quad d_0 \leftarrow 0 \\
-6: & \quad \textbf{for} \ j \leftarrow 1, V \ \textbf{do} \\
-7: & \quad \quad d_j \leftarrow d_{j-1} + e^{x_j - m_V} \\
-8: & \quad \textbf{end for} \\
-9: & \quad \textbf{for} \ i \leftarrow 1, V \ \textbf{do} \\
-10: & \quad \quad y_i \leftarrow \frac{e^{x_i - m_V}}{d_V} \\
-11: & \quad \textbf{end for}
-\end{aligned}$
+**Algorithm 2 Safe softmax**
+
+$$
+\begin{array}{l}
+\hline
+1: \quad m_0 \leftarrow -\infty \\
+2: \quad \textbf{for } k \leftarrow 1, V \textbf{ do} \\
+3: \quad \quad m_k \leftarrow \max(m_{k-1}, x_k) \\
+4: \quad \textbf{end for} \\
+5: \quad d_0 \leftarrow 0 \\
+6: \quad \textbf{for } j \leftarrow 1, V \textbf{ do} \\
+7: \quad \quad d_j \leftarrow d_{j-1} + e^{x_j - m_V} \\
+8: \quad \textbf{end for} \\
+9: \quad \textbf{for } i \leftarrow 1, V \textbf{ do} \\
+10: \quad \quad y_i \leftarrow \frac{e^{x_i - m_V}}{d_V} \\
+11: \quad \textbf{end for} \\
+\hline
+\end{array}
+$$
 
 ## 2. 在线归一化计算
 
@@ -75,18 +84,23 @@ softmax_i = \frac{e^{x_i - m_V}}{d_V} \tag{3}$$
 
 这里 $m_j$ 和 $d_j$, 可以在一个 for 循环中同时实现，或者说在一个 kernel 中计算完成；$m_V$ 和 $d_V$ 是全局的最大值和归一化项。
 
-$\text{算法 3 带在线归一化计算的安全 Softmax} \\
-\begin{aligned}
-1: & \quad m_0 \leftarrow -\infty \\
-2: & \quad d_0 \leftarrow 0 \\
-3: & \quad \textbf{for} \ j \leftarrow 1, V \ \textbf{do} \\
-4: & \quad \quad m_j \leftarrow \max(m_{j-1}, x_j) \\
-5: & \quad \quad d_j \leftarrow d_{j-1} \times e^{m_{j-1} - m_j} + e^{x_j - m_j} \\
-6: & \quad \textbf{end for} \\
-7: & \quad \textbf{for} \ i \leftarrow 1, V \ \textbf{do} \\
-8: & \quad \quad y_i \leftarrow \frac{e^{x_i - m_V}}{d_V} \\
-9: & \quad \textbf{end for}
-\end{aligned}$
+**Algorithm 3 Safe softmax with online normalizer calculation**
+
+$$
+\begin{array}{l}
+\hline
+1: \quad m_0 \leftarrow -\infty \\
+2: \quad d_0 \leftarrow 0 \\
+3: \quad \textbf{for } j \leftarrow 1, V \textbf{ do} \\
+4: \quad \quad m_j \leftarrow \max(m_{j-1}, x_j) \\
+5: \quad \quad d_j \leftarrow d_{j-1} \times e^{m_{j-1} - m_j} + e^{x_j - m_j} \\
+6: \quad \textbf{end for} \\
+7: \quad \textbf{for } i \leftarrow 1, V \textbf{ do} \\
+8: \quad \quad y_i \leftarrow \frac{e^{x_i - m_V}}{d_V} \\
+9: \quad \textbf{end for} \\
+\hline
+\end{array}
+$$
 
 算法 3 的 pytorch + python 实现如下所示:
 ```python
@@ -117,7 +131,11 @@ def online_softmax(x: torch.Tensor) -> torch.tensor:
 
 定理 1 可通过数学归纳法进行证明：
 
-- *基础情况*：当  $V = 1$
+<div align="center">
+<img src="../images/online-softmax/theorem1_proof.png" width="90%" alt="theorem1_proof">
+</div>
+
+<!-- - *基础情况*：当  $V = 1$
     $m_1 \leftarrow x_1 \\
         \quad\;\; = max_{k=1}^1x_k\qquad\qquad\qquad\qquad\; \text{根据算法 3 第 4 行}$
     $d_1 \leftarrow e^{x_1 - m_1} \\
@@ -136,7 +154,7 @@ def online_softmax(x: torch.Tensor) -> torch.tensor:
     \quad\;\; = \sum_{j=1}^{S-1} e^{x_j - m_S} + e^{x_S - m_S} \\
     \quad\;\; = \sum_{j=1}^{S} e^{x_j - m_S}$
 
-    归纳步骤同样成立（$d_S$ 的推导第三行成立是因为 $e^{m_{S-1} - m_S}$ 是**常数**）。
+    归纳步骤同样成立（$d_S$ 的推导第三行成立是因为 $e^{m_{S-1} - m_S}$ 是**常数**）。 -->
 
 算法 3 被证明可以计算公式 (2) 中定义的 Softmax 函数，并且是安全的：
 
@@ -212,11 +230,15 @@ $$TopK(y) = (v, z) : v_i = y_{z_i}, v_i \geq y_j, ∀i ∈ [1, K], ∀j /∈ z$$
 对于大批次情况（见图 1），所有三种算法在向量大小 V = 1000 之前表现相似。NVIDIA Visual Profiler 显示在此时，L1 和 L2 缓存抖动开始导致所有三种算法都受到 DRAM 带宽的限制。当这种情况发生时，在线和朴素算法的速度比 Safe 算法更快，在 V = 4000 时达到了约 1.3 倍的提升（参见图中的条形图，显示了在线 Softmax 相较于 Safe Softmax 的性能提升）。这与内存访问次数减少 1.33 倍相当接近。
 > 在向量大小小于 1000 时，GPU 的 SRAM 能放下输入数据，因为 SRAM 速度极快，所以此时算法不受内存带宽限制，三种 softmax 速度差不多；但当向量大小小大于 1000 时，SRAM 空间不够，数据存取与 HBM，此时所有三种算法都受到 DRAM 带宽的限制。
 
+<div align="center">
 <img src="../images/online-softmax/figure1.png" width="50%" alt="figure1">
+</div>
 
 在小批次情况下，所有算法的绝对性能都较低，见图 2（图 2 的柱子普遍低于 图 1）。基准测试为每个向量运行一个线程块；因此在小批次情况下（10 个向量）网格中仅有 10 个线程块。这不足以充分利用 GPU，导致计算和内存子系统未被完全使用，各种延迟暴露出来。同样在批量推理的情况下，所有三种算法在 V = 1000 之前表现相似。之后朴素和在线算法的表现优于 Safe 算法，约为 1.15 倍。
 
+<div align="center">
 <img src="../images/online-softmax/figure2.png" width="50%" alt="figure2">
+</div>
 
 ## 5. 结论和讨论
 
