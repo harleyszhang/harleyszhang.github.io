@@ -28,7 +28,7 @@ categories: Hpc
 
 这里的 grid_size（网格大小）和 block_size（线程块大小）一般来说是一个 `dim3` 的结构体类型的变量，但也可以是一个普通的整型变量，即只有一个维度，其他维度为 `1`。其维度定义如下所示。
 
-```bash
+```cpp
 // 三维 block 和三维 grid
 dim3 grid_size(Gx, Gy, Gz);
 dim3 block_size(Bx, By, Bz);
@@ -59,7 +59,8 @@ dim3 block_size(Bx);
 
 **在 cuda 中希望尽可能多的线程并行，并保证所有数据被处理**，对于：
 
-1. **一维数据(向量相加)**：假设有一个问题需要处理的数据量为 N，每个线程块可以处理 B 个数据项，如果问题规模是线性的，可以计算网格尺寸为 gridSize.x = (N + B - 1) / B，确保所有数据项都被处理，执行配置为：
+1, **一维数据(向量相加)**：假设有一个问题需要处理的数据量为 N，每个线程块可以处理 B 个数据项，如果问题规模是线性的，可以计算网格尺寸为 gridSize.x = (N + B - 1) / B，确保所有数据项都被处理，执行配置为：
+
 ```cpp
 // Threads per CTA (1024)
 int NUM_THREADS = 1 << 10;
@@ -68,7 +69,9 @@ int NUM_BLOCKS = (N + NUM_THREADS - 1) / NUM_THREADS;
 // Launch the kernel on the GPU
 vectorAdd<<<NUM_BLOCKS, NUM_THREADS>>>(d_a, d_b, d_c, N);
 ```
-2. **二维数据（图像处理）**：对于二维数据（如图像、矩阵），如果图像的宽度为 width，高度为 height，每个线程块处理 THREADS * THREADS 个像素，则执行配置为：
+
+2, **二维数据（图像处理）**：对于二维数据（如图像、矩阵），如果图像的宽度为 width，高度为 height，每个线程块处理 THREADS * THREADS 个像素，则执行配置为：
+
 ```cpp
 // Threads per CTA dimension
 int THREADS = 32;
@@ -79,7 +82,9 @@ dim3 gridDim(BLOCKS_X, BLOCKS_Y);
 // Launch kernel
 matrixMul<<<blocks, threads>>>(d_a, d_b, d_c, height, width);
 ```
-3. **三维数据（cnn 特征数据）**：对于三维数据，其尺寸为 width = 512, height = 512, depth = 64，如果每个线程块的尺寸为 blockDim(4, 4, 4)：
+
+3, **三维数据（cnn 特征数据）**：对于三维数据，其尺寸为 width = 512, height = 512, depth = 64，如果每个线程块的尺寸为 blockDim(4, 4, 4)：
+
 ```cpp
 int width = 256;
 int height = 128;
@@ -591,7 +596,7 @@ h_array[10] is 10
 ```
 ## 参考资料
 
-- [极智开发 | CUDA线程模型与全局索引计算方式](https://mp.weixin.qq.com/s/IyQaarSN6V_tukt6KigkGQ)
+- [极智开发-CUDA线程模型与全局索引计算方式](https://mp.weixin.qq.com/s/IyQaarSN6V_tukt6KigkGQ)
 - [C++ CUDA 设置线程块尺寸和网格尺寸](https://mp.weixin.qq.com/s/FfMWa94nLFIejilfc3DCxg)
 - [C++ CUDA 核函数中如何通过索引访问数据](https://mp.weixin.qq.com/s/VuGarPnZu56hYNlkRP5cyw)
 - https://harmanani.github.io/classes/csc447/Notes/Lecture15.pdf
