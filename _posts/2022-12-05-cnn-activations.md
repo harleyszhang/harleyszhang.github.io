@@ -28,7 +28,9 @@ categories: DeepLearning
 
 人工神经元(Artificial Neuron)，简称神经元(Neuron)，是构成神经网络的基本单元，其主要是模拟生物神经元的结构和特性，接收一组输入信号并产生输出。生物神经元与人工神经元的对比图如下所示。
 
-![neuron](../images/activation_function/neuron.png)
+<div align="center">
+<img src="../images/activation_function/neuron.png" width="60%" alt="neuron">
+</div>
 
 从机器学习的角度来看，神经网络其实就是一个**非线性模型**，其基本组成单元为具有非线性激活函数的神经元，通过大量神经元之间的连接，使得多层神经网络成为一种高度非线性的模型。**神经元之间的连接权重就是需要学习的参数**，其可以在机器学习的框架下通过**梯度下降方法**来进行学习。
 > 深度学习一般指的是深度神经网络模型，泛指网络层数在三层或者三层以上的神经网络结构。
@@ -379,7 +381,9 @@ class Softplus(object):
 
 下表汇总比较了几个激活函数的属性:
 
-![activation_function](../images/activation_function/activation_function_summary.png)
+<div align="center">
+<img src="../images/activation_function/activation_function_summary.png" width="60%" alt="activation_function">
+</div>
 
 **激活函数的在线可视化**移步 [Visualising Activation Functions in Neural Networks](https://dashee87.github.io/deep%20learning/visualising-activation-functions-in-neural-networks/)。
 

@@ -68,7 +68,9 @@ $$I_{max} = \frac {\pi }{\beta}$$
 
 > 二维卷积是一个相当简单的操作：从卷积核开始，这是一个小的权值矩阵。这个卷积核在 2 维输入数据上「滑动」，对当前输入的部分元素进行矩阵乘法，然后将结果汇为单个输出像素。
 
-![卷积过程](../images/cnn_flops/conv_dynamic_visual.gif)
+<div align="center">
+<img src="../images/cnn_flops/conv_dynamic_visual.gif" width="60%" alt="卷积过程">
+</div>
 > 图片来源 [Multi-Label Classification and Class Activation Map on Fashion-MNIST](https://towardsdatascience.com/multi-label-classification-and-class-activation-map-on-fashion-mnist-1454f09f5925)。
 
 公式解释如下：
@@ -162,7 +164,9 @@ MAC = ddr_read + ddr_write
 
 总结：与 FP32 相比，采用 BF16/FP16 吞吐量（Throughput）基本可以翻倍，内存（RAM）需求可以减半。但是这两者精度上差异不一样，BF16 可表示的整数范围更广泛，它和 `float32` 的动态范围是等效的，但是尾数精度较小；FP16 表示整数范围较小，但是尾数精度较高。
 
-![](../images/cnn_flops/fp32_fp16_bf16.png)
+<div align="center">
+<img src="../images/cnn_flops/fp32_fp16_bf16.png" width="60%" alt="">
+</div>
 
 ### 3.3 bfloat16 精度
 
@@ -174,7 +178,9 @@ bfloat16 的格式如下所示：
 - 指数宽度：8bit
 - 尾数精度：7bit，而不是经典单精度浮点格式中的 24 位
 
-![bfloat16 的格式](../images/cnn_flops/bfloat16_format.png)
+<div align="center">
+<img src="../images/cnn_flops/bfloat16_format.png" width="60%" alt="bfloat16 的格式">
+</div>
 > 图片来源 [weiki-bfloat16 floating-point format](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)。
 
 bfloat16 格式其实就是截断的 IEEE 754 FP32，可以和 IEEE 754 FP32 格式快速转换。在转换为 bfloat16 格式时，**指数位被保留，而有效数字字段直接通过截断来减少**，且忽略 NaN 特殊情况。
@@ -412,7 +418,9 @@ Estimated Total Size (MB): 280.66
 
 值得注意的是，不同工具统计出来的模型计算量和参数量可能不一样，因为计算方式不一样，但是都是比较准确的。使用 `thop` 工具统计的经典 backbone 的 `Params` 参数量与 `FLOPs` 计算量如下表所示：
 
-![模型复杂度分析结果](../images/cnn_flops/thop_summary.png)
+<div align="center">
+<img src="../images/cnn_flops/thop_summary.png" width="60%" alt="模型复杂度分析结果">
+</div>
 
 ## 参考资料
 

@@ -50,7 +50,9 @@ categories: Model_Compression
 
 `NVIDIA RTX A4000` 建立在 `NVIDIA`  `Ampere` 架构之上，其芯片规格如下所示:
 
-![](../images/efficient_model/A4000_specifications.png)
+<div align="center">
+<img src="../images/efficient_model/A4000_specifications.png" width="60%" alt="">
+</div>
 
 `A4000` 芯片配备 `16 GB` 的 `GDDR6` 显存、`256` 位显存接口（`GPU` 和 `VRAM` 之间总线上的独立链路数量），因为这些与显存相关的特性，所以 `A4000` 内存带宽可以达到 `448 GB/s`。
 
@@ -86,7 +88,9 @@ categories: Model_Compression
 
 `CPU` 和 `GPU` 的直观对比图如下所示
 
-![distribution of chip resources for a CPU versus a GPU](../images/efficient_model/gpu-devotes-more-transistors-to-data-processing.png)
+<div align="center">
+<img src="../images/efficient_model/gpu-devotes-more-transistors-to-data-processing.png" width="60%" alt="distribution of chip resources for a CPU versus a GPU">
+</div>
 > 图片来源 [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
 
 最后简单总结下英伟达 `GPU` 架构的一些特点:
@@ -95,7 +99,9 @@ categories: Model_Compression
 
 `2008-2020` 英伟达 `GPU` 架构进化史如下图所示:
 
-![`2008-2020` 英伟达 `GPU` 架构进化史](../images/efficient_model/gpu_architecture.png)
+<div align="center">
+<img src="../images/efficient_model/gpu_architecture.png" width="60%" alt="`2008-2020` 英伟达 `GPU` 架构进化史">
+</div>
 
 另外，英伟达 `GPU` 架构从 `2010` 年开始到 `2020` 年这十年间的架构演进历史概述，可以参考知乎的文章-[英伟达GPU架构演进近十年，从费米到安培](https://zhuanlan.zhihu.com/p/413145211)。
 
@@ -143,7 +149,9 @@ categories: Model_Compression
 
 下表是 `MobileNetv2` 和 `ResNet50` 在一些常见 `NPU` 芯片平台上做的性能测试结果。
 
-![深度可分离卷积和常规卷积模型在不同NPU芯片平台上的性能测试结果](../images/efficient_model/model_perf.png)
+<div align="center">
+<img src="../images/efficient_model/model_perf.png" width="60%" alt="深度可分离卷积和常规卷积模型在不同NPU芯片平台上的性能测试结果">
+</div>
 
 
 以上，均是看了轻量级网络论文总结出来的一些**不同硬件平台部署轻量级模型的经验**，实际结果还需要自己手动运行测试。

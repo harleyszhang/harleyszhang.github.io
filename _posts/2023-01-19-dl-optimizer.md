@@ -50,7 +50,9 @@ SGD 优化算法是最经典的神经网络优化方法，**虽然收敛速度�
 
 下图1展现了随机梯度下降算法的梯度搜索轨迹示意图。可以看出由于梯度的随机性质，梯度搜索轨迹要很嘈杂（**动荡现象**）。
 
-![sgd_algorithm](../images/optimizers/sgd_algorithm.png)
+<div align="center">
+<img src="../images/optimizers/sgd_algorithm.png" width="60%" alt="sgd_algorithm">
+</div>
 
 因此，在实际应用中，**随机梯度下降 SGD 法必须和动态学习率**方法结合起来使用，否则使用固定学习率 + SGD的组合会使得模型收敛过程变得更复杂。
 
@@ -62,13 +64,17 @@ SGD 优化算法是最经典的神经网络优化方法，**虽然收敛速度�
 
 > 花书中对动量算法对目的解释是，解决两个问题: Hessian 矩阵的病态条件和随机梯度的方差。更偏学术化一点。
 
-![动量算法效果](../images/optimizers/momentum_algorithm.png)
+<div align="center">
+<img src="../images/optimizers/momentum_algorithm.png" width="60%" alt="动量算法效果">
+</div>
 
 Momentum 算法的通俗理解就是，其模拟了物体运动时的惯性，即更新参数的时候会同时结合过去以及当前 batch 的梯度。算法在更新的时候会一定程度上保留之前更新的方向，同时利用当前 batch 的梯度微调最终的更新方向。这样一来，可以在一定程度上增加稳定性，从而学习地更快，并且还有一定摆脱局部最优的能力。
 
 下图3展现了动量算法的前进方向。
 
-![动量算法的前进方向](../images/optimizers/momentum_algorithm_update.png)
+<div align="center">
+<img src="../images/optimizers/momentum_algorithm_update.png" width="60%" alt="动量算法的前进方向">
+</div>
 
 第一次的梯度更新完毕后，会记录 $v1$ 的动量值。在“求梯度点”进行第二次梯度检查时，得到2号方向，与 $v1$ 的动量**组合**后，最终的更新为 2' 方向。这样一来，由于有 $v1$ 的存在，会迫使梯度更新方向具备“惯性”，从而可以减小随机样本造成的震荡。
 
@@ -111,8 +117,16 @@ Momentum 算法的通俗理解就是，其模拟了物体运动时的惯性，�
 
 |算法     | 损失函数和准确率|
 |--------|------------------------------------------------------------|
-|SGD     |![SGD训练损失函数曲线](../images/optimizers/op_sgd_train_loss_log.png)|
-|Momentum|![momentum训练损失函数曲线](../images/optimizers/op_momentum_train_loss_log.png)|
+|SGD     |
+<div align="center">
+<img src="../images/optimizers/op_sgd_train_loss_log.png" width="60%" alt="SGD训练损失函数曲线">
+</div>
+|
+|Momentum|
+<div align="center">
+<img src="../images/optimizers/op_momentum_train_loss_log.png" width="60%" alt="momentum训练损失函数曲线">
+</div>
+|
 
 从上表的对比可以看出，同一个深度模型， 普通随机梯度下降法的曲线震荡很严重，且经过 epoch=10000 次也没有到达预定 0.001 的损失值；但动量算法经过 2000 个 epoch 就迭代结束。
 
@@ -307,7 +321,9 @@ Adam 算法计算过程如下:
 
 Adam 算法实现步骤如下。
 
-![Adam 算法实现步骤](../images/optimizers/adam_algorithm.png)
+<div align="center">
+<img src="../images/optimizers/adam_algorithm.png" width="60%" alt="Adam 算法实现步骤">
+</div>
 
 **Adam 总结**：由于 Adam 继承了 RMSProp 的传统，所以学习率同样不宜设置太高，初始学习率设置为 `0.01` 时比较理想。
 

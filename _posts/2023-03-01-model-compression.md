@@ -80,7 +80,9 @@ $$q_{i} = \frac{z_{i}/T}{\sum_{j}z_{j}/T}$$
 
 知识蒸馏算法整体的框架图如图下所示。
 
-![knowledge_distillation](../images/model_compression/knowledge_distillation.png)
+<div align="center">
+<img src="../images/model_compression/knowledge_distillation.png" width="60%" alt="knowledge_distillation">
+</div>
 > 图片来源 https://intellabs.github.io/distiller/knowledge_distillation.html。
 
 ## 三，轻量级模型架构
@@ -123,7 +125,9 @@ $$q_{i} = \frac{z_{i}/T}{\sum_{j}z_{j}/T}$$
 
 下表是 `MobileNetv2` 和 `ResNet50` 在一些常见 `NPU` 芯片平台上做的性能测试结果。
 
-![深度可分离卷积和常规卷积模型在不同NPU芯片平台上的性能测试结果](../images/model_compression/model_perf_result.png)
+<div align="center">
+<img src="../images/model_compression/model_perf_result.png" width="60%" alt="深度可分离卷积和常规卷积模型在不同NPU芯片平台上的性能测试结果">
+</div>
 
 
 以上，均是看了轻量级网络论文总结出来的一些**不同硬件平台部署轻量级模型的经验**，实际结果还需要自己手动运行测试。
@@ -133,7 +137,9 @@ $$q_{i} = \frac{z_{i}/T}{\sum_{j}z_{j}/T}$$
 
 深度学习模型中一般存在着大量冗余的参数，将权重矩阵中相对“不重要”的权值剔除（即置为 `0`），可达到降低计算资源消耗和提高实时性的效果，而对应的技术则被称为模型剪枝。
 
-![典型模型剪枝图例](../images/model_compression/model_pruning_pipeline.png)
+<div align="center">
+<img src="../images/model_compression/model_pruning_pipeline.png" width="60%" alt="典型模型剪枝图例">
+</div>
 
 > 来源论文 [Han et al. Learning both Weights and Connections for Efficient Neural Networks, NIPS 2015](https://arxiv.org/pdf/1506.02626.pdf)。
 
@@ -163,7 +169,9 @@ $$q_{i} = \frac{z_{i}/T}{\sum_{j}z_{j}/T}$$
 1. 非结构化稀疏具有更高的模型压缩率和准确性，在通用硬件上的加速效果不好。因为其计算特征上的“不规则”，导致需要特定硬件支持才能实现加速效果。
 2. 结构化稀疏虽然牺牲了模型压缩率或准确率，但在通用硬件上的加速效果好，所以其被广泛应用。因为结构化稀疏使得权值矩阵更规则更加结构化，更利于硬件加速。
 
-![Unstructured_structured_sparsity](../images/model_compression/Unstructured_structured_sparsity.png)
+<div align="center">
+<img src="../images/model_compression/Unstructured_structured_sparsity.png" width="60%" alt="Unstructured_structured_sparsity">
+</div>
 
 综上所述，深度神经网络的权值稀疏应该在**模型有效性和计算高效性之间做权衡**。
 

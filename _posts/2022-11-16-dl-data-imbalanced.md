@@ -69,7 +69,9 @@ categories: DeepLearning
 
 数据过采样和欠采样示意图如下所示。
 
-![数据过采样和欠采样](../images/imbalance/under_over.png)
+<div align="center">
+<img src="../images/imbalance/under_over.png" width="60%" alt="数据过采样和欠采样">
+</div>
 
 #### 数据采样方法总结
 
@@ -92,7 +94,9 @@ categories: DeepLearning
 
 如下图所示，**类别重组**方法步骤如下:
 
-![类别重组法步骤示意图](../images/imbalance/class_balance1.png)
+<div align="center">
+<img src="../images/imbalance/class_balance1.png" width="60%" alt="类别重组法步骤示意图">
+</div>
 
 1. 对原始样本的每个类别的样本分别排序好，计算每个类别的样本数目，并记录样本数最多的那个类别的样本数量 `max_num`。
 2. 基于最大样本数 `max_num` 产生一个随机数列表，然后用此列表中的随机数对各自类别的样本数求余，得到对应索引值列表 `index_list`。
@@ -110,7 +114,9 @@ random_list = random.sample(range(0, 10), 10)
 print(random_list)
 ```
 
-![如何得到一个随机整数列表](../images/imbalance/get_random_integer_list.png)
+<div align="center">
+<img src="../images/imbalance/get_random_integer_list.png" width="60%" alt="如何得到一个随机整数列表">
+</div>
 
 类别重组法对有点很明显，在设计好重组代码函数后，只需要原始图像列表即可，所有操作都在内存中在线完成，易于实现且更通用。其实仔细深究可以发现，海康提出的这个类别重组法和前面的数据采样方法是很类似的，其**本质都是通过采样（sampler）策略让类别不均衡的各类数据在每轮训练中出现的次数是一致的**。
 

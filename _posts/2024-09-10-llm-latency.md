@@ -123,7 +123,9 @@ $$
 
 另外，假设在推理系统中我们能实现计算和 GPU 通信并行处理，则可以得到了一个更为复杂的比率：每字节通信的 flops（前面的 A100 的操作强度对应的是每字节内存访问的 flops）。以下使用张量并行的主要 layer 的通信量、计算量和每字节通信 flops 值表：
 
-![flops_per_byte_comms](../images/transformer_latency/flops_per_byte_comms.png)
+<div align="center">
+<img src="../images/transformer_latency/flops_per_byte_comms.png" width="60%" alt="flops_per_byte_comms">
+</div>
 
 这是我们 A100 GPU 的每字节通信 flops 值。我们希望上述表格最后一行的值大于硬件的每字节 flops 计算值，这样可以确保系统保持在计算（flops）受限状态（这里先假设内存带宽不是限制因素）。对于 $d_{model} > 1024$ 的模型运行在 A100 上来说，我们的推理是安全高效的！但对于维度为 512 的情况，情况就有些不理想了。
 
@@ -133,15 +135,23 @@ batch_size、内存带宽限制 vs 计算限制对 Latency 会有什么影响呢
 
 **自回归模型的推理实验**。**固定 seq_len=8/20**， 如果 seq_len * bs < ops:byte ratio * gpu_num，即**小 `batch_size` 范围 的 latency 不明显增加的**。从实验测试结果看，**使用 4/8 个 V100 硬件做模型推理（张量并行），输入长度固定，在 batch_size < 16/32，其 latency 不明显增加**。且有以下实验结果：
 
-![bs_latency2](../images/transformer_latency/bs_latency2.png)
-![bs_latency](../images/transformer_latency/bs_latency.png)
+<div align="center">
+<img src="../images/transformer_latency/bs_latency2.png" width="60%" alt="bs_latency2">
+</div>
+<div align="center">
+<img src="../images/transformer_latency/bs_latency.png" width="60%" alt="bs_latency">
+</div>
 
 **`Latency` 的理论分析**：对于自回归模型的推理，默认推理配置是 `use_cache=True`，**固定 seq_len**，batch_size 较小时，模型的算术强度较低，模型受到内存带宽限制，`Latency` 取决于内存读取和 gpu 通信时间，而 `batch_size` 较小时，kv cache 读写时间和较小，而 gpu 通信时间又是固定的，故 latency 不明显增加；当 batch_size 增加到一定程度，模型的算术强度增加，模型受到算力 `FLOPS` 限制，故此时 `Latency` 与 batch_size 几乎成正比。
 
 另外，基于上述分析和前面 decode 阶段 `mha` 层的计算量估计也可知，当 batch_size 和 output_ids_len 比较大时，**迭代生成 token 的过程中，后面 token 的 Latency 会大于前面的**。
 
-![token latency](../images/transformer_latency/every_token_latency.png)
-![token latency](../images/transformer_latency/every_token_latency2.png)
+<div align="center">
+<img src="../images/transformer_latency/every_token_latency.png" width="60%" alt="token latency">
+</div>
+<div align="center">
+<img src="../images/transformer_latency/every_token_latency2.png" width="60%" alt="token latency">
+</div>
 
 ## 参考资料
 - [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/)

@@ -44,17 +44,23 @@ categories: Model_Compression
 
 论文[1]认为，权重数值的绝对值大小可以看做重要性的一种度量，权重数值越大对模型输出贡献也越大，反正则不重要，删去后模型精度的影响应该也比较小。
 
-![权重参数重要性](../images/pruning/weights_important.png)
+<div align="center">
+<img src="../images/pruning/weights_important.png" width="60%" alt="权重参数重要性">
+</div>
 
 当然，权重剪枝（**Weight Pruning**）虽然影响较小但不等于没有影响，且**不同类型、不同顺序的网络层，在权重剪枝后影响也各不相同**。论文[1]在 AlexNet 的 CONV 层和 FC 层的做了**剪枝敏感性**实验，结果如下图所示。
 
-![pruning sensitivity](../images/pruning/pruning_sensitivity.png)
+<div align="center">
+<img src="../images/pruning/pruning_sensitivity.png" width="60%" alt="pruning sensitivity">
+</div>
 
 从图中实验结果可以看出，**卷积层的剪枝敏感性大于全连接层，且第一层卷积层最为敏感**。论文作者推测这是因为全连接层本身参数冗余性更大，第一层卷积层的输入只有 3 个通道所以比起他卷积层冗余性更少。
 
 即使是移除绝对值接近于 0 的权重也会带来推理精度的损失，因此为了恢复模型精度，通常在剪枝之后需要再训练模型。典型的模型剪枝三段式工作 `pipeline` 流程[1]和剪枝前后网络连接变化如下图所示。
 
-![classic pruning pipeline](../images/pruning/classic_pruning_pipeline.png)
+<div align="center">
+<img src="../images/pruning/classic_pruning_pipeline.png" width="60%" alt="classic pruning pipeline">
+</div>
 > 剪枝算法常用的是三段式工作 pipeline: 训练、剪枝、微调。
 
 上述算法步骤中，其中重点问题有两个，一个是如何评估连接权重的重要性，另一个是如何在重训练中恢复模型精度。对于**评估连接权重的重要性**，有两个典型的方法，一是基于神经元连接权重**数值幅度**的方法[1]，这种方法原理简单；二是使用目标函数对参数求二阶导数表示参数的贡献度[10]。
@@ -63,12 +69,16 @@ categories: Model_Compression
 
 剪枝`Three-Step Training Pipeline` 中三个阶段权重数值分布如下图所示。微调之后的模型权重分布将部分地恢复正态分布的特性。
 
-![weight gaussian distribution](../images/pruning/weight_gaussian.png)
+<div align="center">
+<img src="../images/pruning/weight_gaussian.png" width="60%" alt="weight gaussian distribution">
+</div>
 > 深度网络中存在权重稀疏性:（a）剪枝前的权重分布；（b）剪除0值附近权值后的权重分布；（c）网络微调后的权重分布从单峰变成了双峰。
 
 值得注意的是，韩松提出的权重稀疏方法是细粒度稀疏，去只能在专用硬件上-EIE实现加速效果，是对硬件不友好的稀疏方法，因为其稀疏后得到的权重矩阵是**高度非规则的矩阵**，如下图所示。
 
-![高度非规则的矩阵形状](../images/pruning/irregular_matrix.png)
+<div align="center">
+<img src="../images/pruning/irregular_matrix.png" width="60%" alt="高度非规则的矩阵形状">
+</div>
 
 ### 2.2，激活稀疏
 
@@ -97,7 +107,9 @@ $$ReLU(x) = max(0, x)$$
 
 该函数使得负半轴的输入都产生 0 值的输出，这可以认为激活函数给网络带了另一种类型的稀疏性；另外 `max_pooling` 池化操作也会产生类似稀疏的效果。即无论网络接收到什么输入，大型网络中很大一部分神经元的输出大多为零。激活和池化稀疏效果如下图所示。
 
-![神经网络中的激活稀疏](../images/pruning/activation_sparse.png)
+<div align="center">
+<img src="../images/pruning/activation_sparse.png" width="60%" alt="神经网络中的激活稀疏">
+</div>
 > 即 ReLU 激活层和池化层输出特征图矩阵是稀疏的。
 
 受以上现象启发，论文[4]经过了一些简单的统计，发现无论输入什么样图像数据，CNN 中的许多神经元都具有非常低的激活。作者认为**零神经元**很可能是**冗余的**（`redundant`），可以在不影响网络整体精度的情况下将其移除。 因为它们的存在只会增加过度拟合的机会和优化难度，这两者都对网络有害。
@@ -114,13 +126,17 @@ $$APoZ^{(i)}_c = APoZ(O_c^{(i)}) = \frac{\sum_k^N \sum_j^M f(O^{(i)}_{c,j}(k=0))
 
 > 这里更高是指更接近于模型输出侧的网络层。
 
-![APoZ_distribution](../images/pruning/APoZ_distribution.png)
+<div align="center">
+<img src="../images/pruning/APoZ_distribution.png" width="60%" alt="APoZ_distribution">
+</div>
 
 可以看出 CONV5-3 层的大多数神经元的该项指标都分布在 93%附近。实际上，VGG-16 模型中共有 631 个神经元的 APoZ 值超过90%。激活函数的引入反映出 VGG  网络存在着大量的稀疏与冗余性，且大部分冗余都发生在更高的卷积层和全连接层。
 
 **激活稀疏的工作流程**和稀疏前后网络连接变化如下图所示。
 
-![activation_sparsification_pipeline](../images/pruning/activation_sparsification_pipeline.png)
+<div align="center">
+<img src="../images/pruning/activation_sparsification_pipeline.png" width="60%" alt="activation_sparsification_pipeline">
+</div>
 
 工作流程沿用韩松论文[1]提出的 Three-Step Training Pipeline，算法步骤如下所示:
 
@@ -138,7 +154,9 @@ $$APoZ^{(i)}_c = APoZ(O_c^{(i)}) = \frac{\sum_k^N \sum_j^M f(O^{(i)}_{c,j}(k=0))
 
 > AlexNet 模型的训练是采用分布式训练。深度神经网络训练中的各层梯度值存在高度稀疏特性。
 
-![Alex_grad_sparse](../images/pruning/Alex_grad_sparse.png)
+<div align="center">
+<img src="../images/pruning/Alex_grad_sparse.png" width="60%" alt="Alex_grad_sparse">
+</div>
 
 因为梯度交换成本很高，由此导致了网络带宽成为了分布式训练的瓶颈，为了克服分布式训练中的通信瓶颈，梯度稀疏（`Gradient Sparsification`）得到了广泛的研究，其实现的途径包括：
 
@@ -147,7 +165,9 @@ $$APoZ^{(i)}_c = APoZ(O_c^{(i)}) = \frac{\sum_k^N \sum_j^M f(O^{(i)}_{c,j}(k=0))
 
 **深度梯度压缩（DGC）**[5]，在梯度稀疏化基础上采用动量修正、本地梯度剪裁、动量因子遮蔽和 warm-up训练 4 种方法来做梯度压缩，从而减少分布式训练中的通信带宽。其算法效果如下图所示。
 
-![deep_gradient_sparse](../images/pruning/deep_gradient_sparse.png)
+<div align="center">
+<img src="../images/pruning/deep_gradient_sparse.png" width="60%" alt="deep_gradient_sparse">
+</div>
 
 ### 2.4，小结
 
@@ -160,7 +180,9 @@ $$APoZ^{(i)}_c = APoZ(O_c^{(i)}) = \frac{\sum_k^N \sum_j^M f(O^{(i)}_{c,j}(k=0))
 
 神经网络的权重、激活和梯度稀疏性总结如下表所示:
 
-![model_sparsification_summary](../images/pruning/model_sparsification_summary.png)
+<div align="center">
+<img src="../images/pruning/model_sparsification_summary.png" width="60%" alt="model_sparsification_summary">
+</div>
 
 ## 三，结构化稀疏
 
@@ -192,7 +214,9 @@ filter (channel) pruning (FP) 属于粗粒度剪枝（或者叫结构化剪枝 S
 
 论文[Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/pdf/1708.06519.pdf)[7] 认为 conv-layer 的每个channel 的重要程度可以和 bn 层关联起来，如果某个 channel 后的 `bn` 层中对应的 scaling factor 足够小，就说明该 channel 的重要程度低，可以被忽略。如下图中橙色的两个通道被剪枝。
 
-![channel_pruning](../images/pruning/channel_pruning.png)
+<div align="center">
+<img src="../images/pruning/channel_pruning.png" width="60%" alt="channel_pruning">
+</div>
 
 `BN` 层的计算公式如下：
 
@@ -213,7 +237,9 @@ $$
 
 一个阶段中的残差结构块是紧密联系在一起的，如下图所示。
 
-![structured_way_compare](../images/pruning/structured_way_compare.png)
+<div align="center">
+<img src="../images/pruning/structured_way_compare.png" width="60%" alt="structured_way_compare">
+</div>
 
 当一个阶段的输出特征发生变化时（一些特征被抛弃），其对应的每个残差结构的输入特征和输出特征都要发生相应的变化，所以整个阶段中，每个残差结构的第一个卷积层的输入通道数，以及最后一个卷积层的输出通道数都要发生相同的变化。由于这样的影响只限定在当前的阶段，不会影响之前和之后的阶段，因此我们称这个剪枝过程为阶段级别的剪枝（stage-level pruning）。 
 
@@ -226,7 +252,9 @@ $$
 1. 非结构化稀疏具有更高的模型压缩率和准确性，在通用硬件上的加速效果不好。因为其计算特征上的“不规则”，导致需要特定硬件支持才能实现加速效果。
 2. 结构化稀疏虽然牺牲了模型压缩率或准确率，但在通用硬件上的加速效果好，所以其被广泛应用。因为结构化稀疏使得权值矩阵更规则更加结构化，更利于硬件加速。
 
-![Unstructured_structured_sparsity](../images/pruning/Unstructured_structured_sparsity.png)
+<div align="center">
+<img src="../images/pruning/Unstructured_structured_sparsity.png" width="60%" alt="Unstructured_structured_sparsity">
+</div>
 
 综上所述，深度神经网络的权值稀疏应该在**模型有效性和计算高效性之间做权衡**。
 

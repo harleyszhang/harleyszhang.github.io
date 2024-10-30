@@ -93,7 +93,9 @@ torch.nn.init.uniform_(tensor, a=0, b=1)
 
 当目标问题较为简单、网络深度不大时，一般用标准初始化就可以了。但是当使用深度神经网络时，标准初始化在 Sigmoid 激活函数上的表现会遇到如下图 1 所示的问题。
 
-![图1-标准初始化在Sigmoid激活函数上的表现](../images/parameter_init/init_normal_sigmoid.png)
+<div align="center">
+<img src="../images/parameter_init/init_normal_sigmoid.png" width="60%" alt="图1-标准初始化在Sigmoid激活函数上的表现">
+</div>
 
 上图是一个 `6`层的深度网络，使用 **全连接层 + Sigmoid 激活函数**的配置，图中表示的是**各层激活函数的直方图**。可以看到各层的激活值严重向两侧 $[0,1]$ 靠近，从 `Sigmoid` 的函数曲线可以知道这些值的导数趋近于 `0`（激活函数值趋近于零，导数也趋近于零），**反向传播时的梯度逐步消失**。处于中间地段的值比较少，对参数学习非常不利。
 > 传统的**固定方差**的高斯分布初始化方法，在网络变深的时候会使得模型很难收敛。
@@ -131,7 +133,9 @@ $$
 
 下图2展示了 Xavier 初始化在 Sigmoid 激活函数上的表现，其和图1都基于同一个深度为 `6` 层的网络。可以看到，后面几层的**激活函数输出值**的分布**仍然**基本符合正态分布，这有利于神经网络的学习。
 
-![图2-Xavier初始化在Sigmoid激活函数上的表现](../images/parameter_init/init_xavier_sigmoid.png)
+<div align="center">
+<img src="../images/parameter_init/init_xavier_sigmoid.png" width="60%" alt="图2-Xavier初始化在Sigmoid激活函数上的表现">
+</div>
 
 ### 2.4，He 初始化
 
@@ -141,7 +145,9 @@ $$
 
 下图3展现了 Xavier 初始化在 ReLU 激活函数上的表现。
 
-![Xavier初始化在ReLU激活函数上的表现](../images/parameter_init/init_xavier_relu.png)
+<div align="center">
+<img src="../images/parameter_init/init_xavier_relu.png" width="60%" alt="Xavier初始化在ReLU激活函数上的表现">
+</div>
 
 于是 He Kaiming 等人于 2015 年提出了 He 初始化法（也叫做MSRA初始化法）。
 
@@ -166,7 +172,9 @@ torch.nn.init.kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_re
 
 下图4 为 He 初始化在 ReLU 激活函数上的表现，所用网络和前面一样。
 
-![图4-He初始化在ReLU激活函数上的表现](../images/parameter_init/init_msra_relu.png)
+<div align="center">
+<img src="../images/parameter_init/init_msra_relu.png" width="60%" alt="图4-He初始化在ReLU激活函数上的表现">
+</div>
 
 ### 2.5，总结
 
@@ -176,7 +184,9 @@ torch.nn.init.kaiming_normal_(tensor, a=0, mode='fan_in', nonlinearity='leaky_re
 
 除了以上初始化，比较常用的还有“随机初始化 With BN”和“预训练模型初始化”，各种初始化方法的特点总结如下:
 
-![参数初始化方法总结](../images/parameter_init/parameter_init_summary.png)
+<div align="center">
+<img src="../images/parameter_init/parameter_init_summary.png" width="60%" alt="参数初始化方法总结">
+</div>
 ## 参考资料
 
 - 《深度学习-8.4 参数初始化策略》

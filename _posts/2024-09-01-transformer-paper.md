@@ -47,7 +47,9 @@ categories: Transformer
 
 Layer Norm 层的计算可视化如下图所示:
 
-![Layer Norm](../images/transformer_code/layer_norm.jpeg)
+<div align="center">
+<img src="../images/transformer_code/layer_norm.jpeg" width="60%" alt="Layer Norm">
+</div>
 
 ### 4. Encoder 和 Decoder 结构
 

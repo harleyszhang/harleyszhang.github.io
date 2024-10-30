@@ -35,7 +35,9 @@ categories: DeepLearning
 
 损失函数大致可分为两种：回归损失（针对连续型变量）和分类损失（针对离散型变量），其在深度学习实验流程中的位置如下图所示。
 
-![深度学习的实验流程](../images/loss/define_loss.png)
+<div align="center">
+<img src="../images/loss/define_loss.png" width="60%" alt="深度学习的实验流程">
+</div>
 
 > 图片来源李宏毅 2022 机器学习暑期课程-[Machine Learning Pytorch Tutorial](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2022-course-data/Pytorch%20Tutorial%201.pdf)。
 
@@ -154,7 +156,9 @@ H(p,q) &=  -\sum_j p(x_j)\log q(x_j) \\
 
 横坐标是预测输出，纵坐标是损失函数值。$y=1$ 意味着当前样本标签值是1，当预测输出越接近1时，损失函数值越小，训练结果越准确。当预测输出越接近0时，损失函数值越大，训练结果越糟糕。此时，损失函数值如下图所示。
 
-![二分类交叉熵损失函数图](../images/loss/binary_cross_entropy_loss_function_diagram.png)
+<div align="center">
+<img src="../images/loss/binary_cross_entropy_loss_function_diagram.png" width="60%" alt="二分类交叉熵损失函数图">
+</div>
 
 ### 2.3，多分类问题的交叉熵
 
@@ -267,7 +271,9 @@ $$
 
 下图可以形象地说明 Softmax 的计算过程。
 
-![Softmax工作过程](../images/loss/softmax_process.png)
+<div align="center">
+<img src="../images/loss/softmax_process.png" width="60%" alt="Softmax工作过程">
+</div>
 
 当输入的数据 $[z_1,z_2,z_3]$ 是 $[3, 1, -3]$ 时，按照图示过程进行计算，可以得出输出的概率分布是 $[0.879,0.119,0.002]$。对比 max 运算和 Softmax 的不同，如下表所示。
 
@@ -387,12 +393,16 @@ $$\text{Huber loss} = \left \lbrace \begin{matrix}
 
 三种回归损失函数的曲线图比较如下：
 
-![loss_for_regression](../images/loss/loss_for_regression.png)
+<div align="center">
+<img src="../images/loss/loss_for_regression.png" width="60%" alt="loss_for_regression">
+</div>
 > 代码来源 [Loss Function Plot.ipynb](https://nbviewer.org/github/massquantity/Loss-Functions/blob/master/Loss%20Function%20Plot.ipynb)。
 
 三种回归损失函数的其他形式定义如下:
 
-![three_regression_loss](../images/activation_function/three_regression_loss.png)
+<div align="center">
+<img src="../images/activation_function/three_regression_loss.png" width="60%" alt="three_regression_loss">
+</div>
 
 ### 3.4，代码实现
 

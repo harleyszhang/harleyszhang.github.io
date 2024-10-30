@@ -42,7 +42,9 @@ dim3 block_size(Bx);
 
 三维 block 和三维 grid 的可视化如下图所示:
 
-![dim3_block_grid](../images/cuda_exec_model/dim3_block_grid.png)
+<div align="center">
+<img src="../images/cuda_exec_model/dim3_block_grid.png" width="60%" alt="dim3_block_grid">
+</div>
 
 `dim3` 可以被看作是一个简单的三维向量，其中每个维度代表一个不同的轴：
 1. `x`：第一个维度，通常用于表示线程或线程块的线性索引。
@@ -265,7 +267,9 @@ int main() {
 
 基于共享内存实现的了分块缓冲和分块矩阵乘法技术。分块矩阵乘法原理的如下图所示：
 
-![gemm_tiled](../images/triton_tutorials2/gemm_tiled.png)
+<div align="center">
+<img src="../images/triton_tutorials2/gemm_tiled.png" width="60%" alt="gemm_tiled">
+</div>
 
 使用 shared memory，将每个 block 需要计算的数据先存放到 shared memory 中，减少对 global memory 的访存次数。
 

@@ -158,7 +158,9 @@ if __name__ == '__main__':
 
 程序运行后输出的**几何变换**增强效果如下所示:
 
-![opencv几何变换增强](../images/data_augmentation/opencv_geometry_transorform.png)
+<div align="center">
+<img src="../images/data_augmentation/opencv_geometry_transorform.png" width="60%" alt="opencv几何变换增强">
+</div>
 
 ## 三，pytorch 图像增强
 
@@ -218,7 +220,9 @@ show_images(resized_imgs, 1, 4)
 
 程序运行后的输出图如下。
 
-![Resize](../images/data_augmentation/resize_output.png)
+<div align="center">
+<img src="../images/data_augmentation/resize_output.png" width="60%" alt="Resize">
+</div>
 
 
 ## 四，imgaug 图像增强
@@ -227,7 +231,9 @@ imgaug 是一个用于机器学习实验中图像增强的库。 它支持广泛
 
 单个输入图像的示例增强如下所示。
 
-![imgaug_example](../images/data_augmentation/imaug_example.png)
+<div align="center">
+<img src="../images/data_augmentation/imaug_example.png" width="60%" alt="imgaug_example">
+</div>
 
 imgaug 的图像增强方法如下所示。
 
