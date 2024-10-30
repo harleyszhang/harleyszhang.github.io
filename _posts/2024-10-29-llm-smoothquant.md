@@ -186,7 +186,7 @@ $$
 如图 9（顶部）所示，与 FasterTransformer 的 FP16 实现的 OPT 相比，单 GPU 情况下 SmoothQuant-O3 可以进一步减少 OPT-13B 和 OPT-30B 的执行延迟，最高可达 1.56 倍加速。值得一提的是，对于必须分布在多个 GPU 上的大型模型，SmoothQuant 在使用一半 GPU 数量的情况下实现了相似甚至更好的延迟表现。
 
 <div align="center">
-<img src="../images/smoothquant/latency_memory_save_expriment2.png" width="45%" alt="最高1.5x加速和近 2 倍节省内存">
+<img src="../images/smoothquant/latency_memory_save_expriment2.png" width="100%" alt="最高1.5x加速和近 2 倍节省内存">
 </div>
 
 **decode 阶段**。
