@@ -132,7 +132,7 @@ def online_softmax(x: torch.Tensor) -> torch.tensor:
 定理 1 可通过数学归纳法进行证明：
 
 <div align="center">
-<img src="../images/online-softmax/theorem1_proof.png" width="90%" alt="theorem1_proof">
+<img src="../images/online-softmax/theorem1_proof.png" width="100%" alt="theorem1_proof">
 </div>
 
 <!-- - *基础情况*：当  $V = 1$
