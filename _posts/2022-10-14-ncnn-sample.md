@@ -81,7 +81,9 @@ github submodule（子模块）允许你将一个 Git 仓库作为另一个 Git 
 
 一个典型的 Intel Skylake 消费级四核 CPU，其核心架构如下图所示。
 
-![cpu 核心架构](../images/ncnn/cpu_architecture.png)
+<div align="center">
+<img src="../images/ncnn/cpu_architecture.png" width="60%" alt="cpu 核心架构">
+</div>
 
 ## 三，ncnn 推理模型
 
@@ -142,7 +144,9 @@ static int print_topk(const std::vector<float>& cls_scores, int topk)
 
 最后，实际跑下 sample 看下运行结果，这里模型用的是 imagenet 训练的 shufflenetv2 模型，然后用编译好的 shufflenetv2 程序去跑测试图片，输入图片和程序运行结果如下:
 
-![dog](../images/ncnn/dog.png)
+<div align="center">
+<img src="../images/ncnn/dog.png" width="60%" alt="dog">
+</div>
 
 ```bash
 /ncnn/build/examples# ./shufflenetv2 demo.jpeg
@@ -205,7 +209,9 @@ for (int j = 0; j < out.w; j++)
 
 这里之所以需要手动调用 softmax 层，是因为官方提供的 shufflenetv2 模型结构文件的最后一层是 `fc` 层，没有 `softmax` 层。
 
-![shufflenetv2_param](../images/ncnn/shufflenetv2_param.png)
+<div align="center">
+<img src="../images/ncnn/shufflenetv2_param.png" width="60%" alt="shufflenetv2_param">
+</div>
 
 值得注意的是，ncnn::Mat 类型默认采用的是 NCHW （通道在前，即 Number-Channel-Height-Width）的格式。在常见的分类任务中，ncnn 网络输出的一般是一个大小为 [1, 1, num_classes] 的张量，其中第三个维度的大小为类别数，上述代码即 `out.w` 表示类别数量，而 out.h 和 out.c 都为 1。
 

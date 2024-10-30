@@ -56,7 +56,9 @@ categories: Model_Compression
 通常，可以根据 `FP32` 和 `INT8` 的转换策略对**量化模型推理方案**进行分类。一些框架简单地引入了 `Quantize` 和 `Dequantize` 层，当从卷积或全链接层送入或取出时，它将 `FP32` 转换为 `INT8` 或相反。在这种情况下，如下图的上半部分所示，模型本身和输入/输出采用 `FP32` 格式。深度学习推理框架加载模型时，重写网络以插入 `Quantize` 和 `Dequantize` 层，并将权重转换为 `INT8` 格式。
 > 注意，之所以要插入反量化层（`Dequantize`），是因为量化技术的早期，只有卷积算子支持量化，但实际网络中还包含其他算子，而其他算子又只支持 `FP32` 计算，因此需要把 INT8 转换成 FP32。但随着技术的迭代，后期估计会逐步改善乃至消除  `Dequantize` 操作，达成全网络的量化运行，而不是部分算子量化运行。
 
-![量化模型的推理](../images/quantization/reasoning_with_quantized_models.svg)
+<div align="center">
+<img src="../images/quantization/reasoning_with_quantized_models.svg" width="60%" alt="量化模型的推理">
+</div>
 
 > 图四：混合 FP32/INT8 和纯 INT8 推理。红色为 FP32，绿色为 INT8 或量化。
 
@@ -93,7 +95,9 @@ categories: Model_Compression
 
 根据量化前后浮点空间中的零的量化值是否依然是 0，可以将浮点数的线性量化分为两类-**对称量化** Symmetric Quantization 和**非对称量化** Asymmetric Quantization。
 
-![对称量化喝非对称量化](../images/quantization/symmetric_quantization2.png)
+<div align="center">
+<img src="../images/quantization/symmetric_quantization2.png" width="60%" alt="对称量化喝非对称量化">
+</div>
 
 ## 二 量化算术
 
@@ -119,7 +123,9 @@ $$(-1)^s \times M \times 2^k$$
 
 单精度浮点类型 `float` 占用 `32bit`，所以也称作 `FP32`；双精度浮点类型 `double` 占用 `64bit`。
 
-![定点和浮点的格式和示例](../images/quantization/fixed_point_and_floating_point_formats_and_examples.jpg)
+<div align="center">
+<img src="../images/quantization/fixed_point_and_floating_point_formats_and_examples.jpg" width="60%" alt="定点和浮点的格式和示例">
+</div>
 > 图五：定点和浮点的格式和示例。
 
 ### 2.2 量化浮点
@@ -136,14 +142,18 @@ $$(-1)^s \times M \times 2^k$$
 
 值的注意的是，一般神经网络层权重的值分布范围很窄，非常接近零。图八给出了 `MobileNetV1` 中十层（拥有最多值的层）的权重分布。
 
-![十层 MobileNetV1 的权重分布](../images/quantization/weight_distribution_of_ten_layer_mobilenetv1.svg)
+<div align="center">
+<img src="../images/quantization/weight_distribution_of_ten_layer_mobilenetv1.svg" width="60%" alt="十层 MobileNetV1 的权重分布">
+</div>
 > 图八：十层 MobileNetV1 的权重分布。
 
 ### 2.2.1 对称量化(均匀量化)
 
 对称量化的浮点值和 `8` 位定点值的映射关系如下图，从图中可以看出，对称量化就是将一个 `tensor` 中的 $\left[-max(\left\| x \right\|),max(\left\| x \right\|)\right]$ 内的 `FP32` 值分别映射到 `8 bit` 数据的 $[-128, 127]$ 的范围内，中间值按照线性关系进行映射，称这种映射关系是对称量化。可以看出，对称量化的浮点值和量化值范围都是相对于零对称的，所以叫对称量化。
 
-![对称量化](../images/quantization/symmetric_quantization.png)
+<div align="center">
+<img src="../images/quantization/symmetric_quantization.png" width="60%" alt="对称量化">
+</div>
  
 假设 $x_f$ 表示 FP32 权重 $x_{float}$， $x_q$ 表示量化的 INT8 权重值（整数）$x_{quantized}$，$x_s$ 是缩放因子 $x_{scale}$（映射因子、量化尺度（范围）、FP32 的缩放系数），`round` 为取整函数。。对权权值和数据的量化可以归结为寻找 $scale$ 的过程，量化方法的改进本质上是选择最优 $scale$ 值的过程。
 
@@ -162,7 +172,9 @@ $$x_f = x_s \times (x_q - x_{zero})$$
 
 大多数情况下量化是选用无符号整数，即 `UINT8` 的值域就为 $[0,255]$ ，这种情况，更能体现非对称量化的意义。非对称量化的浮点值和 `UINT8` 量化值的映射关系如下图：
 
-![非对称量化](../images/quantization/asymmetric_quantization.png)
+<div align="center">
+<img src="../images/quantization/asymmetric_quantization.png" width="60%" alt="非对称量化">
+</div>
 
 **权重参数的非对称量化算法可以分为两个步骤**：
 
@@ -234,7 +246,9 @@ z_q
 
 同时值映射的精度是受由 $x_f^{min}$ 和 $x_f^{max}$ 得到的 $x_s$ 显著影响的。并且，如图十所示，权重中邻近 $x_f^{min}$ 和 $x_f^{max}$ 附近的值通常是可忽略的，其实就等同于**映射关系中浮点值的 `min` 和 `max` 值是可以通过算法选择的**。
 
-![图十将浮点量化为定点时调整最小值-最大值](../images/quantization/figure_10_adjusting_the_minimum_maximum_value_when_quantizing_floating_point_to_fixed_point.jpg)
+<div align="center">
+<img src="../images/quantization/figure_10_adjusting_the_minimum_maximum_value_when_quantizing_floating_point_to_fixed_point.jpg" width="60%" alt="图十将浮点量化为定点时调整最小值-最大值">
+</div>
 > 图十将浮点量化为定点时调整最小值-最大值。
 
 上图展示了可以调整 `min/max` 来选择一个值域，使得值域的值更准确地量化，而范围外的值则直接映射到定点的 min/max。例如，当从原始值范围 $[−1,1]$ 中选定$x_{min}^{float} = −0.9$ 和 $x_{max}^{float} = 0.8$ ，$[−0.9,0.8]$ 中的值将能更准确地映射到 $[0,255]$ 中，而 $[−1,−0.9]$ 和 $[0.8,1]$ 中的值分别映射为 $0$ 和 $255$。
@@ -271,7 +285,9 @@ x_{max} = \left\{\begin{matrix}max(X) & if x_{max} = None \\  (1-c)x_{max}+c \; 
 
 理解 KL 散度方法之前，我们先看下 `TensorRT` 关于值域范围阈值选择的一张图：
 
-![阈值选择](../images/quantization/threshold_selection.png)
+<div align="center">
+<img src="../images/quantization/threshold_selection.png" width="60%" alt="阈值选择">
+</div>
 
 这张图展示的是不同网络结构的不同 `layer` 的激活值分布统计图，横坐标是激活值，纵坐标是统计数量的归一化表示，而不是绝对数值统计；图中有卷积层和池化层，它们之间分布很不相同，因此合理的量化方法应该是适用于不同的激活值分布，并且减小信息损失，因为从 `FP32` 到 `INT8` 其实也是一种信息再编码的过程。
 

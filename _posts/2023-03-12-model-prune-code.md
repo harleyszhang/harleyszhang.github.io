@@ -49,7 +49,9 @@ categories: Model_Compression
 
 剪枝功能在 `torch.nn.utils.prune` 类中实现，代码在文件 torch/nn/utils/prune.py 中，主要剪枝类如下图所示。
 
-![pytorch_pruning_api_file.png](../images/pruning_code/pytorch_pruning_api_file.png)
+<div align="center">
+<img src="../images/pruning_code/pytorch_pruning_api_file.png" width="60%" alt="pytorch_pruning_api_file.png">
+</div>
 
 剪枝原理是基于张量（Tensor）的掩码（Mask）实现。掩码是一个与张量形状相同的布尔类型的张量，掩码的值为 True 表示相应位置的权重需要保留，掩码的值为 False 表示相应位置的权重可以被删除。
 
@@ -57,7 +59,9 @@ Pytorch 将原始参数 `<param>` 复制到名为 `<param>_original` 的参数�
 
 pytorch 剪枝的 `api` 和教程比较混乱，我个人将做了如下表格，希望能将 api 和剪枝方法及分类总结好。
 
-![pytorch_pruning_api](../images/pruning_code/pytorch_pruning_api_summary.png)
+<div align="center">
+<img src="../images/pruning_code/pytorch_pruning_api_summary.png" width="60%" alt="pytorch_pruning_api">
+</div>
 
 pytorch 中进行模型剪枝的工作流程如下：
 
@@ -147,7 +151,9 @@ class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=
 
 而 pytorch 中常规卷积的卷积核权重 `shape` 都为（`C_out, C_in, kernel_height, kernel_width`），所以在代码中卷积层权重 `shape` 为 `[3, 2, 3, 3]`，dim = 0 对应的是 shape [3, 2, 3, 3] 中的 `3`。这里我们 dim 设定了哪个轴，那自然剪枝之后权重张量对应的轴机会发生变换。
 
-![dim](../images/pruning_code/dim.png)
+<div align="center">
+<img src="../images/pruning_code/dim.png" width="60%" alt="dim">
+</div>
 
 理解了前面的关键概念，下面就可以实际使用了，`dim=0` 的示例如下所示。
 
@@ -191,7 +197,9 @@ tensor([[[[-0.0005,  0.1039,  0.0306],
 
 从运行结果可以明显看出，卷积层参数的最后一个通道参数张量被移除了（为 `0` 张量），其解释参见下图。
 
-![dim_understand](../images/pruning_code/dim_understand.png)
+<div align="center">
+<img src="../images/pruning_code/dim_understand.png" width="60%" alt="dim_understand">
+</div>
 
 `dim = 1` 的情况：
 

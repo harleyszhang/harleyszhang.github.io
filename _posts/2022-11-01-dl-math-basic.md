@@ -283,9 +283,13 @@ $$\sigma^{2} = {\frac {1}{N}}\sum _{i=1}^{N}\left(x_{i}-\mu \right)^{2}$$
 
 **期望与方差运算性质**如下:
 
-![期望运算性质](../images/ml/expected_properties.png)
+<div align="center">
+<img src="../images/ml/expected_properties.png" width="60%" alt="期望运算性质">
+</div>
 
-![方差运算性质](../images/ml/variance_operation_properties.png)
+<div align="center">
+<img src="../images/ml/variance_operation_properties.png" width="60%" alt="方差运算性质">
+</div>
 > 来源: 知乎文章-[【AP统计】期望E(X)与方差Var(X)](https://zhuanlan.zhihu.com/p/64859161)。
 
 ### 3.8.4，协方差
@@ -306,7 +310,9 @@ $$\operatorname {cov} (X,Y)=\operatorname {E} ((X-\mu )(Y-\nu ))=\operatorname {
 
 下表列出了一些常用概率分布的方差。
 
-![probability_distributions](../images/dl/probability_distributions.png)
+<div align="center">
+<img src="../images/dl/probability_distributions.png" width="60%" alt="probability_distributions">
+</div>
 
 ### 3.9.1，伯努利分布
 
@@ -351,7 +357,9 @@ $$X \sim N(\mu,\sigma^2)$$
 
 正态分布概率密度函数曲线呈钟形，也称之为钟形曲线（类似于寺庙里的大钟，因此得名）。我们通常所说的**标准常态分布**是位置参数 $\mu = 0$，尺度参数 $\sigma ^{2} = 1$ 的正态分布（见右图中红色曲线）。
 
-![四个不同参数集的概率密度函数（红色线代表标准正态分布）](../images/dl/2880px-Normal_Distribution_PDF.png)
+<div align="center">
+<img src="../images/dl/2880px-Normal_Distribution_PDF.png" width="60%" alt="四个不同参数集的概率密度函数（红色线代表标准正态分布）">
+</div>
 
 采用正态分布在很多应用中都是一个明智的选择。当我们由于缺乏关于某个实 数上分布的先验知识而不知道该选择怎样的形式时，正态分布是默认的比较好的选择，其中有两个原因。
 
@@ -376,7 +384,9 @@ $$
 
 **指数分配概率密度函数曲线**如下所示。
 
-![指数分配概率密度函数](../images/dl/Exponential_distribution_pdf.png)
+<div align="center">
+<img src="../images/dl/Exponential_distribution_pdf.png" width="60%" alt="指数分配概率密度函数">
+</div>
 
 ## 3.10，常用函数的有用性质
 
@@ -386,7 +396,9 @@ $$\sigma(x) = \frac{1}{1+exp(-x)}$$
 
 `logistic sigmoid` 函数通常用来产生伯努利分布的参数 $p$，因为它的范围是 $(0, 1)$，位于 $p$ 参数值的有效范围内。下图 3.3 给出了 `sigmoid` 函数的图示。从图中可以明显看出，`sigmoid` 函数在变量取绝对值非常大的正值或负值时会出现**饱和(`saturate`)现象**，意味着函数会变得**很平**，并且对输入的微小改变会变得**不敏感**。
 
-![sigmoid函数示意图](../images/dl/schematic_diagram_of_sigmoid_function.png)
+<div align="center">
+<img src="../images/dl/schematic_diagram_of_sigmoid_function.png" width="60%" alt="sigmoid函数示意图">
+</div>
 
 `sigmoid` 函数的一些性质在后续学习 `BP` 算法等内容时会很有用，我们需要牢记：
 

@@ -23,11 +23,15 @@ categories: DeepLearning
 
 一般机器学习任务其工作流程可总结为如下所示 `pipeline`。
 
-![机器学习任务pipeline](../images/data_normalization/ml_pipeline.png)
+<div align="center">
+<img src="../images/data_normalization/ml_pipeline.png" width="60%" alt="机器学习任务pipeline">
+</div>
 
 在工业界，**数据预处理**步骤对模型精度的提高发挥着重要作用。对于机器学习任务来说，广泛的数据预处理一般有四个阶段（**视觉任务一般只需 `Data Transformation`**）: 数据清洗(Data Cleaning)、数据整合(Data Integration)、数据转换(Data Transformation)和数据缩减(Data Reduction)。
 
-![steps_in_data_normalizationing](../images/data_normalization/steps_in_data_preprocessing.png)
+<div align="center">
+<img src="../images/data_normalization/steps_in_data_preprocessing.png" width="60%" alt="steps_in_data_normalizationing">
+</div>
 
 1，`Data Cleaning`： 数据清理是数据预处理步骤的一部分，通过填充缺失值、平滑噪声数据、解决不一致和删除异常值来清理数据。
 
@@ -68,7 +72,9 @@ categories: DeepLearning
 
 数据具有不同尺度的情况会导致一个重要属性（在较低尺度上）的有效性被稀释，因为其他属性可能具有更大范围（尺度）的值，简单点理解就是**范围（`scale`）大的属性在模型当中更具优先级**，具体示例如下图所示。
 
-![different scale](../images/data_normalization/diffenent_scale.png)
+<div align="center">
+<img src="../images/data_normalization/diffenent_scale.png" width="60%" alt="different scale">
+</div>
 
 总结起来就是，当数据存在多个属性但其值具有不同尺度（`scale`）时，这可能会导致我们在做数据挖掘操作时数据模型表现不佳，因此这时候执行 `normalization` 操作将所有属性置于相同的尺寸内是很有必要的。
 
@@ -76,7 +82,10 @@ categories: DeepLearning
 
 1，**样本的各个特征的取值要符合概率分布**，即 $[0,1]$（也可理解为降低模型训练对**特征尺度**的敏感度）。输入数据特征取值范围和输出标签范围一样，从损失函数等高线图来分析，不做 Normalization 的训练过程会更曲折。
 
-![标准化前后的损失函数等高线图的对比](../images/data_normalization/normalization_contour_line.png) 
+<div align="center">
+<img src="../images/data_normalization/normalization_contour_line.png" width="60%" alt="标准化前后的损失函数等高线图的对比">
+</div>
+ 
 
 2，神经网络假设所有的输入输出数据都是**标准差为1，均值为0**，包括权重值的初始化，激活函数的选择，以及优化算法的设计。
 
@@ -110,11 +119,15 @@ $$
 
 经过 zero-mean Normalization 操作之后的数据正态分布函数曲线图会产生如下所示转换。
 
-![Z-Score Normalization show](../images/data_normalization/z-score-1.png)
+<div align="center">
+<img src="../images/data_normalization/z-score-1.png" width="60%" alt="Z-Score Normalization show">
+</div>
 
 其中，正态分布函数曲线中均值和标准差值的确定参考下图。
 
-![正态分布函数曲线中均值和标准差值的确定](../images/data_normalization/Normal_Distribution.png)
+<div align="center">
+<img src="../images/data_normalization/Normal_Distribution.png" width="60%" alt="正态分布函数曲线中均值和标准差值的确定">
+</div>
 
 2，`Min-Max Normalization`
 
@@ -179,7 +192,9 @@ sns.distplot(data_scaled, color='g')
 
 程序输出结果如下。可以看出经过 z-Score Normalization 操作之后，原始数据的分布转化成平均值为 $\mu=0$，标准差为 $\sigma = 1$ 的正太分布（称为**标准正态分布**）。
 
-![z_score_normalization_3_histogram](../images/data_normalization/z_score_normalization_3_histogram.png)
+<div align="center">
+<img src="../images/data_normalization/z_score_normalization_3_histogram.png" width="60%" alt="z_score_normalization_3_histogram">
+</div>
 
 2, `Min-Max Normalization` 方法的实现比较简单，以下是基于 numpy 库实现 `Min-Max Normalization` 功能的示例代码：
 
@@ -201,7 +216,9 @@ print(Min_Max_Normalization(X))
 
 程序输出结果如下，可以看出原始数组数据都被缩放到 $[0, 1]$ 范围内了。
 
-![程序输出结果](../images/data_normalization/output2.png)
+<div align="center">
+<img src="../images/data_normalization/output2.png" width="60%" alt="程序输出结果">
+</div>
 
 ## 二，normalize images
 
@@ -361,11 +378,15 @@ if __name__ == '__main__':
 
 1，程序输出和两种 normalization **操作效果可视化**对比图如下所示:
 
-![normalization效果图](../images/data_normalization/normalization_visual.png)
+<div align="center">
+<img src="../images/data_normalization/normalization_visual.png" width="60%" alt="normalization效果图">
+</div>
 
 2，原图和两种 normalization 操作后的图像**像素值正态分布可视化**对比图如下所示:
 
-![normalization_dist_visual](../images/data_normalization/normalization_dist_visual.png)
+<div align="center">
+<img src="../images/data_normalization/normalization_dist_visual.png" width="60%" alt="normalization_dist_visual">
+</div>
 
 像素值分布可视化用的代码如下。
 

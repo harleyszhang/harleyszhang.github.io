@@ -120,7 +120,9 @@ $$MSE_{test} = \frac{1}{m} \sum_{i}(\hat{y}^{(test)}-y^{(test)})_{i}^{2} \tag{5.
 
 图 5.1 展示了线性回归算法的使用示例。
 
-![图5.1-一个线性回归的例子](../images/ml_basc_principle/figure_5_1_an_example_of_linear_regression.png)
+<div align="center">
+<img src="../images/ml_basc_principle/figure_5_1_an_example_of_linear_regression.png" width="60%" alt="图5.1-一个线性回归的例子">
+</div>
 
 ## 5.2 容量、过拟合和欠拟合
 
@@ -140,7 +142,9 @@ $$MSE_{test} = \frac{1}{m} \sum_{i}(\hat{y}^{(test)}-y^{(test)})_{i}^{2} \tag{5.
 
 图 5.2 展示了上述原理的使用情况。我们比较了线性，二次和 `9` 次预测器拟合真实二次函数的效果。
 
-![图5-2三个模型拟合二次函数](../images/ml_basc_principle/figure_5_2_three_models_fitting_quadratic_functions.png)
+<div align="center">
+<img src="../images/ml_basc_principle/figure_5_2_three_models_fitting_quadratic_functions.png" width="60%" alt="图5-2三个模型拟合二次函数">
+</div>
 
 提高机器学习模型泛化性的早期思想是**奥卡姆剃刀**原则，即选择“最简单”的那一个模型。
 
@@ -150,7 +154,9 @@ $$MSE_{test} = \frac{1}{m} \sum_{i}(\hat{y}^{(test)}-y^{(test)})_{i}^{2} \tag{5.
 
 虽然更简单的函数更可能泛化(训练误差和测试误差的差距小)，但我们仍然必须选择一个足够复杂的假设来实现低训练误差。通常，随着模型容量的增加，训练误差会减小，直到它逐渐接近最小可能的误差值（假设误差度量具有最小值）。通常，**泛化误差是一个关于模型容量的 U 形曲线函数**。如下图 `5.3` 所示。
 
-![容量和误差之间的典型关系](../images/ml_basc_principle/figure_5_3_model_capacity.png)
+<div align="center">
+<img src="../images/ml_basc_principle/figure_5_3_model_capacity.png" width="60%" alt="容量和误差之间的典型关系">
+</div>
 
 ### 5.2.1 没有免费午餐定理
 
@@ -209,7 +215,9 @@ $$J(w,b)= -\frac{1}{m} \sum_{i=1}^m [y_i \ln a_i + (1-y_i) \ln (1-a_i)]+ \frac{\
 一个**小规模的测试集**意味着平均测试误差估计的统计不确定性，使得很难判断算法 A 是否比算法 B 在给定的任务上做得更好。解决办法是基于在原始数据上**随机采样或分离**出的不同数据集上**重复训练和测试**，最常见的就是 $k$-折交叉验证，即将数据集分成 $k$ 个 不重合的子集。测试误差可以估计为 $k$ 次计算后的平均测试误差。在第 $i$ 次测试时， 数据的第 $i$ 个子集用于测试集，其他的数据用于训练集。算法过程如下所示。
 > k 折交叉验证虽然一定程度上可以解决小数据集上测试误差的不确定性问题，但代价则是增加了计算量。
 
-![k-折交叉验证算法](../images/ml_basc_principle/k-fold.png)
+<div align="center">
+<img src="../images/ml_basc_principle/k-fold.png" width="60%" alt="k-折交叉验证算法">
+</div>
 
 ## 5.4 估计、偏差和方差
 
@@ -247,7 +255,9 @@ $$
 
 **偏差和方差的关系和机器学习容量、欠拟合和过拟合的概念紧密相联**。用 MSE 度量泛化误差(偏差和方差对于泛化误差都是有意义的)时，增加容量会增加方差，降低偏差。如图 5.6 所示，我们再次在关于容量的函数中，看到泛化误差的 U 形曲线。
 
-![偏差方差泛化误差和模型容量的关系](../images/ml_basc_principle/figure_5_6.png)
+<div align="center">
+<img src="../images/ml_basc_principle/figure_5_6.png" width="60%" alt="偏差方差泛化误差和模型容量的关系">
+</div>
 
 ## 5.5 最大似然估计
 
@@ -296,11 +306,15 @@ $k$-均值聚类初始化 k 个不同的中心点 ${μ^{(1)}, . . . , μ^{(k)}}$
 
 机器学习算法中的代价函数通常可以分解成每个样本的代价函数的总和。
 
-![sgd](../images/ml_basc_principle/sgd.png)
+<div align="center">
+<img src="../images/ml_basc_principle/sgd.png" width="60%" alt="sgd">
+</div>
 
 随机梯度下降的核心是，**梯度是期望**，而期望可使用小规模的样本近似估计。具体来说，在算法的每一步，我们从训练集中均匀抽出一小批量(`minibatch`)样本 $B={x^{(1)},...,x^{(m′)}}$。小批量的数目 $m′$ 通常是一个相对较小的数，一般为 $2^n$（取决于显卡显卡）。重要的是，当训练集大小 m 增长时，$m′$ 通常是固定的。我们可能在拟合几十亿的样本时，但每次更新计算只用到几百个样本。
 
-![sgd2](../images/ml_basc_principle/sgd2.png)
+<div align="center">
+<img src="../images/ml_basc_principle/sgd2.png" width="60%" alt="sgd2">
+</div>
 
 梯度下降往往被认为很慢或不可靠。以前，将梯度下降应用到非凸优化问题被认为很鲁莽或没有原则。但现在，我们知道梯度下降用于深度神经网络模型的训练时效果是不错的。优化算法不一定能保证在合理的时间内达到一个局部最小值，但它通常能及时地找到代价函数一个很小的值，并且是有用的。
 

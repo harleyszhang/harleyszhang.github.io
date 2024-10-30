@@ -32,7 +32,9 @@ categories: Backbone
 
 因此，作者将网络设计为 $H(x) = F(x) + x$，即直接把恒等映射作为网络的一部分，只要 $F(x) = 0$，即实现**恒等映射**: $H(x) = x$。残差块结构（`resdiual block`）。基本残差块结构如下图所示: 
 
-![image-20230217211129945](../images/resnet/image-20230217211129945.png)
+<div align="center">
+<img src="../images/resnet/image-20230217211129945.png" width="60%" alt="image-20230217211129945">
+</div>
 
 从图中可以看出，一个残差块有 $2$ 条路径 $F(x)$ 和 $x$，$F(x)$ 路径拟合**残差** $H(x)-x$，可称为残差路径，$x$ 路径为恒等映射（identity mapping），称其为”shortcut”。图中的 $⊕$ 为逐元素相加（`element-wise addition`），要求参与运算的 $F(x)$ 和 $x$ 的尺寸必须相同！
 > 这就把前面的问题转换成了学习一个残差函数 $F(x) = H(x) - x$。
@@ -47,7 +49,9 @@ categories: Backbone
 1. 一种没有 `bottleneck` 结构，如图3-5左所示，称之为“basic block”，由 2 个 $3\times 3$ 卷积层构成。2 层的残差学习单元其两个输出部分必须具有相同的通道数（因为残差等于目标输出减去输入，即 $H(x) - x$，所以输入、输出通道数目需相等)。
 2. 另一种有 `bottleneck` 结构，称之为 “bottleneck block”，对于每个残差函数 $F$，使用 $3$ 层堆叠而不是 2 层，3 层分别是 $1\times 1$，$3\times 3$ 和 $1\times 1$ 卷积。其中 $1\times 1$ 卷积层负责先减小然后增加（恢复）维度，使 $3\times 3$ 卷积层的通道数目可以降低下来，降低参数量减少算力瓶颈（这也是起名 bottleneck 的原因 ）。`50` 层以上的残差网络都使用了 bottleneck block 的残差块结构，因为其可以减少计算量和降低训练时间。
 
-![image-20230217211429369](../images/resnet/image-20230217211429369.png)
+<div align="center">
+<img src="../images/resnet/image-20230217211429369.png" width="60%" alt="image-20230217211429369">
+</div>
 
 > 3 层的残差学习单元是参考了 Inception Net 结构中的 `Network in Network` 方法，在中间 $3\times 3$ 的卷积前后使用 $1\times 1$ 卷积，实现先降低维度再提升维度，从而起到降低模型参数和计算量的作用。
 
@@ -55,7 +59,9 @@ categories: Backbone
 
 `shortcut` 路径大致也分成 $2$ 种，一种是将输入 $x$ 直接输出，另一种则需要经过 $1\times 1$ 卷积来升维或降采样，其是为了将 `shortcut` 输出与 `F(x)` 路径的输出保持形状一致，但是其对网络性能的提升并不明显，两种结构如图3-6所示。
 
-![image-20230217211358863](../images/resnet/image-20230217211358863.png)
+<div align="center">
+<img src="../images/resnet/image-20230217211358863.png" width="60%" alt="image-20230217211358863">
+</div>
 
 Residual Block（残差块）之间的衔接，在原论文中，$F(x)+x$ 是经过 ReLU 后直接作为下一个 block 的输入 $x$。
 
@@ -65,11 +71,15 @@ Residual Block（残差块）之间的衔接，在原论文中，$F(x)+x$ 是经
 
 ResNet18 其结构如下图所示。
 
-![image-20230217212628578](../images/resnet/image-20230217212628578.png)
+<div align="center">
+<img src="../images/resnet/image-20230217212628578.png" width="60%" alt="image-20230217212628578">
+</div>
 
 ResNet18 网络具体参数如下表所示。
 
-![image-20230217212933666](../images/resnet/image-20230217212933666.png)
+<div align="center">
+<img src="../images/resnet/image-20230217212933666.png" width="60%" alt="image-20230217212933666">
+</div>
 
 假设图像输入尺寸为，$1024\times 2048$，ResNet 共有五个阶段。
 
