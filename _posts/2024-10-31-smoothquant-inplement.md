@@ -1,7 +1,7 @@
 ---
 layout: post
 title: SmoothQuant 源码剖析
-date: 2024-10-30 19:00:00
+date: 2024-10-31 19:00:00
 summary: 详细解析了 SmoothQuant 仓库的源码，其主要分三个部分：基于校准集统计激活最大值 `calibration.py`、激活难度迁移至权重的平滑模块 smooth.py 以及包含模型权重转换的伪量化推理 fake_quant.py 和真正量化推理 `opt.py`。
 categories: LLM_Compression
 ---
