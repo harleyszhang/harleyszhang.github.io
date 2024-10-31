@@ -1,6 +1,6 @@
 ---
 layout: post
-title: SmoothQuant 源码剖析
+title: AWQ 量化详解
 date: 2024-11-01 19:00:00
 summary: 先回顾了 SmoothQuant 算法的是三个核心观点，然后开始解读 AWQ 算法的两个核心观点（创新点）：：LLM 权重并非同等重要，只有 0.1%~1% 的小部分显著权重对模型输出精度影响较大，又因为幅度较大的输入特征通常更重要，因此需要基于激活分布来挑选权重的显著通道，以及如何基于激活感知缩放保护关键权重。
 categories: LLM_Compression
