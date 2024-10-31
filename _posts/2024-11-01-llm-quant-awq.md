@@ -82,6 +82,7 @@ $$
 Q(w \cdot s) \cdot \frac{x}{s} = \Delta' \cdot \text{Round}\left(\frac{w s}{\Delta'}\right) \cdot x \cdot \frac{1}{s},
 \tag{2}
 $$
+
 > 虽然公式 1 和公式 2 在数学上是“等效”的，但是带来的精度损失是不一样的。
 
 $\Delta'$ 是在应用 $s$ 之后的新量化缩放系数。作者通过实验发现：
