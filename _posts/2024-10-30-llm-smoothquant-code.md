@@ -3,7 +3,7 @@ layout: post
 title: SmoothQuant 源码剖析
 date: 2024-10-30 19:00:00
 summary: 详细解析了 SmoothQuant 仓库的源码，其主要分三个部分：基于校准集统计激活最大值 `calibration.py`、激活难度迁移至权重的平滑模块 smooth.py 以及包含模型权重转换的伪量化推理 fake_quant.py 和真正量化推理 `opt.py`。
-categories: LLM_Infer
+categories: LLM_Compression
 ---
 
 - [一 量化范围和粒度](#一-量化范围和粒度)
@@ -105,7 +105,7 @@ tensor([[2.0000, 2.5000, 2.5000, 2.0000, 1.5000, 1.2000, 1.0000, 0.8571, 1.0000,
 
 再结合前面的量化公式：
 
-$$X¯_{\text{INT8}} = \left\lfloor \frac{X_{\text{FP16}}}{\Delta} \right\rceil, \quad \Delta = \frac{\max(|X|)}{2^{N-1} - 1} \tag{1}$$
+$$X¯_{\text{INT8}} = \left\lfloor \frac{X_{\text{FP16}}}{\Delta} \right\rceil, \quad \Delta = \frac{\max(|X|)}{2^{N-1} - 1}$$
 
 我们就可以实现权重和激活的量化算法，代码如下所示：
 
