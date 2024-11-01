@@ -3,6 +3,20 @@ sitemap: false
 ---
 
 // Partials
+// variables: 包含项目中使用的所有变量定义，如颜色、字体、尺寸等。
+// mixins: 包含项目中使用的所有 mixin 定义，用于复用常见的样式规则。
+// reset: 包含样式重置规则，确保不同浏览器之间的一致性。
+// site: 包含网站的全局样式定义。
+// typography: 包含排版相关的样式定义，如字体、行高等。
+// zenburn: 可能是一个特定的配色方案或主题的样式定义。
+// rouge: 可能是代码高亮相关的样式定义。
+// coderay: 可能是另一个代码高亮相关的样式定义。
+// grid: 包含网格系统的样式定义，用于布局。
+// elements: 包含常见 HTML 元素的样式定义。
+// animations: 包含动画效果的样式定义。
+// page: 包含页面级别的样式定义。
+// 404: 包含 404 错误页面的样式定义。
+
 @import "variables";
 @import "mixins";
 @import "reset";
