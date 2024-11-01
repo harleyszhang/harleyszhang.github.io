@@ -5,6 +5,14 @@
 - 💡 喜欢开源，相信长期主义，崇尚极简主义。
 - 🤔 正在寻求大模型推理部署的工作, 📫 联系我: zhg5200211@outlook.com
 
+## 搜索引擎收录网站
+
+1. 谷歌:[Google Search Console](https://search.google.com/search-console/welcome)
+2. 百度：[“百度搜索资源平台”](https://ziyuan.baidu.com/)
+3. 必应：[Bing Webmaster Tools](https://www.bing.com/webmasters)
+
+截止到 2024-11-01 本个人博客站已经被谷歌、百度和必应搜索站点管理工具收录。
+
 ## Features
 
 - cosy-jekyll-theme is a responsive blog template providing a good reading experience.
