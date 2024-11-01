@@ -1,8 +1,8 @@
 ---
 layout: post
 title: kv-cache 原理及优化概述
-date: 2024-11-01 20:00:00
-summary: `kv cache` 优化是 llm decode 推理阶段最基础的优化技术，即发生在计算第二个输出token至最后一个token过程中，后面的 GQA、PagedAttention、RadixAttention、int8-kv cache、StreamingLLM 本质上都是 kv cache 技术的进一步优化。
+date: 2024-11-01 20:10:00
+summary: kv cache 优化是 llm decode 推理阶段最基础的优化技术，即发生在计算第二个输出token至最后一个token过程中，后面的 GQA、PagedAttention、RadixAttention、int8-kv cache、StreamingLLM 本质上都是 kv cache 技术的进一步优化。
 categories: Transformer
 ---
 
@@ -31,17 +31,19 @@ tokenizer = GPT2Tokenizer.from_pretrained("/WORK/Test/gpt")
 in_text = "Lionel Messi is a"
 in_tokens = torch.tensor(tokenizer.encode(in_text))
 
-# inference
-token_eos = torch.tensor([198]) # line break symbol
+# 定义终止token为句号
+token_eos = torch.tensor([tokenizer.encode('.', add_special_tokens=False)[0]])
 out_token = None
 i = 0
+
 with torch.no_grad():
     while out_token != token_eos:
         logits, _ = model(in_tokens)
         out_token = torch.argmax(logits[-1, :], dim=0, keepdim=True)
         # 将当前轮输出的 token 与之前输入 tokens 拼接，并作为下一轮的输入 tokens
         in_tokens = torch.cat((in_tokens, out_token), 0)
-        text = tokenizer.decode(in_tokens)
+        # 解码当前的 token 序列
+        text = tokenizer.decode(in_tokens) 
         print(f'step {i} input: {text}', flush=True)
         i += 1
 
