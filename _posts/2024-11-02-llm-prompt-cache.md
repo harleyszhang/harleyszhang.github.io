@@ -6,6 +6,13 @@ summary: 基于 KV 缓存，Prompt Cache 通过使注意力状态（kv 向量）
 categories: LLM_Infer
 ---
 
+- [摘要](#摘要)
+- [介绍](#介绍)
+- [3. Prompt Cache 的设计](#3-prompt-cache-的设计)
+  - [schema 编码系统](#schema-编码系统)
+  - [总结](#总结)
+- [参考资料](#参考资料)
+
 ## 摘要
 
 在 多轮对话、DocQA 和 RAG 客服系统场景下中，提示词会包含重复的文本段落，如系统消息、提示模板和用于上下文的文档，也就是说常见文本段的注意力状态（也就是 kv 缓冲向量）$\{(k_1,v_1), (k_2,v_2),..,(k_n,v_n)\}$ 是可以重复利用的。[Prompt Cache](https://arxiv.org/abs/2311.04934) 论文基于这一关键观察，设计了一个**提示词模块**提出来明确定义这些可重用的文本段，确保选择正确的 kv 缓冲向量避免在 prefill 阶段的 kv 重复计算，本质上也是以空间换时间的技术。
@@ -47,12 +54,12 @@ Prompt Cache 和之前全自回归生成、KV 缓存方法之间的区别如下�
 
 基于上述前提，论文中定义了提示标记语言（Prompt Markup Language, PML），将一类 `prompt`（通常对应一类任务）定义成一个模式（`schema`），这个模式又将一个“结构”定义成一个模块（module）。通过 `PML` 可以将前面的提示词格式化为如下 schema：
 
-```json
+```bash
 <schema name="TaskPrompt">
-  <module name="SystemPrompt">...</module>
-  <module name="MetaTemplate">...</module>
-  <module name="Context">...</module>
-  <module name="Examples">...</module>
+    <module name="SystemPrompt">...</module>
+    <module name="MetaTemplate">...</module>
+    <module name="Context">...</module>
+    <module name="Examples">...</module>
 </schema>
 
 ```
