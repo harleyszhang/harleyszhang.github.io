@@ -513,13 +513,13 @@ def smooth_lm(model, scales, alpha=0.5):
 
 ### 2.4 伪量化推理
 
-这里其实包括两个过程，对应代码在 `fake_quant.py`：
+对应代码在 [fake_quant.py](https://github.com/mit-han-lab/smoothquant/blob/main/smoothquant/fake_quant.py) 中，主要包括两个过程，对应代码在 `fake_quant.py`：
 1. FP32 模型转换为 INT8 模型，对应权重量化函数 `from_float`， 并构建 `W8A8Linear` 类；
 2. 伪量化推理，因为是伪量化推理，所以这里没有量化层替换 FP32 层的操作，模型结构和以前一模一样，推理函数 forward 也比较简单，只是加了 `quant` 操作用于验证激活量化函数的正确性。
 
 前面我们计算激活最大值和平滑因子 $s$ 都是逐通道计算的，因为这是确保量化精度的必要条件，但是权重和激活量化的模式我们是可以调整的，以动态调整性能和量化推理精度，具体实现和区别在第一章已经详细描述了，这里不再描述。这部分功能的核心就是在于实现 `W8A8Linear` 类，其中 `from_float` 实现对权重的量化函数，`forward` 函数对激活量化为了评估量化正确性。
 
-为了简化，我只保留了针对 llama 模型权重量化转换和量化推理的部分，添加中文详细注释后的代码如下所示：
+为了方便理解代码，我只保留了针对 llama 模型权重量化转换和量化推理的部分，添加中文详细注释后的代码如下所示：
 
 ```python
 import torch
@@ -786,7 +786,7 @@ def quantize_llama_like(
 
 ### 2.5 INT8 量化推理
 
-这里其实包括两个过程：
+对应代码在 `opt.py`，代码实现其实主要包括两个过程：
 1. FP32 模型转换为 INT8 模型，核心是实现权重的量化函数；
 2. INT8 量化 kernel 替换原来的 FP32 kernel，再执行原来一样的模型推理过程。
 
@@ -807,7 +807,7 @@ def quantize_weight_per_channel_absmax(w):
     return w_q, scales
 ```
 
-并构造 INT8 量化线性层，并用量化层替换原来的浮点层，这里的难点在于要学会用 cuda/triton 编写 `INT8` 量化 kernel，作者基于 cutlass 库实现了多种量化线性层 kernel。python 版的量化 `W8A8B8O8Linear` 类实现如下所示:
+然后就是来创建自定义的 INT8 量化线性层，并用量化层替换模型中原来的浮点层，这里的难点在于要学会用 cuda/triton 编写 `INT8` 量化 kernel，作者基于 cutlass 库实现了多种量化线性层 kernel。python 版的量化 `W8A8B8O8Linear` 类实现如下所示:
 
 ```python
 class W8A8B8O8Linear(nn.Module):
