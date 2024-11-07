@@ -11,13 +11,13 @@ categories: LLM_Compression
 - [2. 预备知识](#2-预备知识)
 - [3. 量化难点总结](#3-量化难点总结)
 - [4. SmoothQuant 算法](#4-smoothquant-算法)
-	- [4.1 SmoothQuant 算法实现及简单实验](#41-smoothquant-算法实现及简单实验)
+  - [4.1 SmoothQuant 算法实现及简单实验](#41-smoothquant-算法实现及简单实验)
 - [5. 实验](#5-实验)
-	- [5.1 实验设置](#51-实验设置)
-	- [5.2 量化后精度对比实验](#52-量化后精度对比实验)
-	- [5.3 加速和节省内存对比实验](#53-加速和节省内存对比实验)
-	- [5.4 扩展：在单节点内运行 530B 模型](#54-扩展在单节点内运行-530b-模型)
-	- [5.5 消融研究](#55-消融研究)
+  - [5.1 实验设置](#51-实验设置)
+  - [5.2 量化后精度对比实验](#52-量化后精度对比实验)
+  - [5.3 加速和节省内存对比实验](#53-加速和节省内存对比实验)
+  - [5.4 扩展：在单节点内运行 530B 模型](#54-扩展在单节点内运行-530b-模型)
+  - [5.5 消融研究](#55-消融研究)
 - [参考资料](#参考资料)
 
 > 先验知识：激活值是指模型中需要进行量化的计算密集层的输入，典型的就是线性层的输入，self-attention 层的输入等等。
@@ -179,7 +179,7 @@ def get_activations_and_weights(model, tokenizer, texts, device):
         outputs = model(**inputs, output_hidden_states=True)
     
     print("outputs.hidden_states shape is ", len(outputs.hidden_states))
-    activation = outputs.hidden_states[-5].abs()[:, :100, :]  # 最后一层激活值，选择前100个token和通道
+    activation = outputs.hidden_states[-5].abs()[:, :100, :]  # 倒数第五个 decoder layer 激活值，并选择前 100 个token和所有通道的值（电脑性能受限没选全部）
     weight = model.model.layers[0].self_attn.k_proj.weight.abs()[:100, :]  # 第一层权重
 
     print(f"activation shape is {activation.shape} self_attn.q_proj.weight shape is {weight.shape}")
