@@ -1,6 +1,6 @@
 ---
 layout: post
-title: llm 推理服务调度框架特性比较
+title: llm服务框架特性总结
 date: 2024-11-08 20:00:00
 summary: 给出各大 llm 服务引擎的主要特性总结，大家都有的常规或者体现不出差距的特性则忽略。
 categories: LLM_Infer
