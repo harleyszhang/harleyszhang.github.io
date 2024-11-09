@@ -17,6 +17,7 @@ categories: Transformer
     - [1.2.3 TransformerEmbedding 层实现](#123-transformerembedding-层实现)
 - [二 Multi-Head Attention 结构](#二-multi-head-attention-结构)
   - [2.1 Self-Attention 结构](#21-self-attention-结构)
+  - [mask 理解](#mask-理解)
   - [Q/K/T 如何理解](#qkt-如何理解)
   - [2.2 Self-Attention 实现](#22-self-attention-实现)
   - [2.3 Multi-Head Attention](#23-multi-head-attention)
@@ -290,7 +291,7 @@ self-attention 的矩阵计算形式如下图所示:
 
 ![self-attention-matrix-calculation](../images/transformer_code/self-attention-matrix-calculation-2.png)
 
-其中关于 mask 的作用可以这样理解，因为是因果模型，所以我们只需要关注当前 token 与之前 token 的注意力关系，而无需理会它与后续 token 的关系。假设 batch_size = 1, seq_len = 4, embedding_dim = 3, self-attention 的计算过程拆解及可视化如下所示。
+其中关于 mask 的作用可以这样理解，因为是因果模型，所以我们只需要关注当前 token 与之前 token 的注意力关系，而无需理会它与后续 token 的关系，这种 mask 被称为 `Causal Mask`。假设 batch_size = 1, seq_len = 4, embedding_dim = 3, self-attention 的计算过程拆解及可视化如下所示。
 > 缩放即除以 $\sqrt{d_k}$ 的操作没有展示。
 
 **计算注意力得分**。在三个线性层对输入矩阵 $X$ 做线性变换得到 Q、K、V 矩阵后，执行 $QK^T$ 计算。
@@ -308,21 +309,55 @@ self-attention 的矩阵计算形式如下图所示:
 >>> import torch
 >>> seq_len = 4
 >>> qkt = torch.randn([seq_len, seq_len])
+>>> qkt
+tensor([[ 0.0697,  0.7932, -0.1177,  0.0812],
+        [ 0.3271, -1.1111, -0.8723,  1.2537],
+        [ 1.7847, -0.2803,  1.3621, -1.1000],
+        [ 0.5083,  0.5289,  1.9308, -0.0894]])
 >>> masked = torch.tril(torch.ones([seq_len, seq_len])) # 返回矩阵的下三角部分
 >>> masked
 tensor([[1., 0., 0., 0.],
         [1., 1., 0., 0.],
         [1., 1., 1., 0.],
         [1., 1., 1., 1.]])
->>> qkt = qkt.masked_fill(masked == 0, float('-inf'))
->>> qkt
-tensor([[-1.6050,    -inf,    -inf,    -inf],
-        [-1.1192, -1.2447,    -inf,    -inf],
-        [ 0.4535,  0.3408,  1.4592,    -inf],
-        [-1.1595,  1.1121,  0.7202, -0.1808]])
+>>> qkt1 = qkt.masked_fill(masked == 0, float('-inf'))
+>>> qkt1
+tensor([[ 0.0697,    -inf,    -inf,    -inf],
+        [ 0.3271, -1.1111,    -inf,    -inf],
+        [ 1.7847, -0.2803,  1.3621,    -inf],
+        [ 0.5083,  0.5289,  1.9308, -0.0894]])
 ```
 
-值得注意的是，在类 gpt 的 decoder-only 架构的模型中，是通过**上三角矩阵**实现了在自回归的过程中，使其只能看到左侧部分，看不到右侧部分的信息。然后得到了不包含pad 和上三角的 attn_mask。
+值得注意的是，在 `llama` 系列模型中，是通过**上三角矩阵**实现了在自回归的过程中使其只能看到左侧部分，看不到右侧部分的信息。
+
+```python
+# 创建上三角矩阵
+>>> mask = torch.triu(torch.ones([seq_len, seq_len]), diagonal=1)
+>>> mask
+tensor([[0., 1., 1., 1.],
+        [0., 0., 1., 1.],
+        [0., 0., 0., 1.],
+        [0., 0., 0., 0.]])
+>>> qkt2 = qkt.masked_fill(mask == 0, float('-inf'))
+tensor([[   -inf,  0.7932,  -0.1177,  0.0812],
+        [   -inf,    -inf,  -0.8723,  1.2537],
+        [   -inf,    -inf,    -inf, -1.1000],
+        [   -inf,    -inf,    -inf,    -inf]])
+```
+
+获取 `attnetion` 中上三角 `mask` 矩阵的函数代码如下所示：
+
+```python
+def generate_prefill_mask(self, tokens : torch.Tensor, prev_pos : int, cur_pos : int, device : torch.device):
+    valid_seq_pos = torch.arange(prev_pos, cur_pos, device=device)
+    seqlen = cur_pos - prev_pos
+    mask = torch.full((1, 1, seqlen, seqlen), float("-inf"), device=device)
+    mask = torch.triu(mask, diagonal=valid_seq_pos[0] + 1)
+
+    return mask
+```
+
+更多 `Masking` 内容请参考文章 [Masking in Transformer Encoder/Decoder Models](https://sanjayasubedi.com.np/deeplearning/masking-in-attention/)。
 
 **softmax 归一化**。得到 $\text{Mask}$ $QK^T$ 之后在 $\text{Mask}$ $QK^T$ 上进行 Softmax，每一行的和都为 1。但是单词 0 在单词 1, 2, 3, 4 上的 `attention score` 都为 0。这符合我们因果模型的性质，毕竟我们只关心当前 token 与之前 token 的注意力（相似度）关系！
 
@@ -331,6 +366,28 @@ tensor([[-1.6050,    -inf,    -inf,    -inf],
 ![Mask 之后的计算PV](../images/transformer_code/compute-PV.png)
 
 经过上述 `self-attention` 步骤就可以得到一个 Mask Self-Attention 的输出矩阵 $Z_i$，然后再通过 Multi-Head Attention 拼接多个输出然后计算得到第一个 Multi-Head Attention 的输出 $Z$，`MHA` 输出 $Z$ 与输入 $X$ 形状一样，即 `MHA` 不会改变输入张量的形状！
+
+### mask 理解
+
+1, mask 的作用
+
+总结就是，mask 在注意力机制的目的**为了在计算注意力分数时**，确保每个词只与它前面的词（包括它自己）进行交互，而不与它后面的词进行交互。这就是所谓的 “causal masking” 或“因果 masking”，而不是为了“生成过程屏蔽下一个单词”。
+
+![decoder_training04](../images/transformer_code/decoder_training04.png)
+
+在注意力计算中，mask 会对“无效”条目赋予负无穷大值 `-inf`。这个 mask 矩阵在应用 softmax 函数之前被加到点积相似度矩阵上。对于“有效”条目(entires)，我们仅加上零，这样查询和键的原始点积值不受影响；而对于“无效”条目，新值将变为负无穷大。
+
+当两个向量的点积值较高时，我们认为它们之间相似度较高；但是如果它们的点积值为负无穷大，则表示它们是“无限不相似”的，即不关注后面的 `tokens`。
+
+2，为什么 gpt 这种 decoder-only 架构的模型还需要 mask？
+
+GPT 在训练阶段为了提高训练效率，所以采用了 “masked self-attention” 机制，这使得在训练阶段每个 token 只能“看”它之前的所有 tokens。而在推理阶段，是自回归一个 token 一个 token 的生成，理论上无需 mask，但是为了和训练阶段保持一致，推理时通常仍然使用 mask。
+
+3，标准 Transformer 模型中的 decoder 模块的 mask 作用？
+
+而在标准的 Transformer 模型中，decoder 部分用于序列到序列的任务，如机器翻译。在这种情况下，decoder 在推理时是一次性获得整个输入序列（例如一个完整的句子），然后生成输出序列。这里的关键是 decoder 在生成每个词时都可以看到完整的输入序列，但是只能看到之前生成的输出词。为了实现这一点，使用了所谓的 “causal mask” 或 “look-ahead mask”，这确保了在生成第 n 个词时，模型只能看到输出序列中的前 n-1 个词。
+
+> 参考[知乎回答](https://www.zhihu.com/question/647132629/answer/3419355716)
 
 ### Q/K/T 如何理解
 
