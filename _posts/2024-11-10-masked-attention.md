@@ -80,6 +80,7 @@ self-attention 的矩阵计算形式如下图所示:
 > 在 `llama` 系列模型中，是构建**上三角 `scores` 矩阵**。
 
 $QK^T$ 计算注意力分数，及应用 `Causal Mask` 过程的示意图如下所示：
+
 ![decoder_training04](../images/transformer_code/decoder_training04.png)
 
 上图可以看到，如果想要实现，让当前 `token` 只关注它及之前位置 `tokens` 的注意力关系，我们需要构建的 `Attention Mask` 是下三角矩阵。
