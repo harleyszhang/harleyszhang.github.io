@@ -249,6 +249,7 @@ $$6 \times 12850 \times 10^6 \times 300 \times 10^9 = 2.313 \times 10^{22}$$
 > 估算训练一个 transformer 模型所需的算力成本的公式可参考文章[Transformer 估算 101](https://mp.weixin.qq.com/s/MFgTUDAOODgMDb59eZC9Cw)。本章主要参考 [Transformer Inference Arithmetic](https://kipp.ly/blog/transformer-inference-arithmetic/) 以及 [分析transformer模型的参数量、计算量、中间激活、KV cache](https://zhuanlan.zhihu.com/p/624740065)。
 
 这个表总结了常见大型语言模型（LLM）的**参数数量、序列长度、批次大小、隐藏层大小、层数和每次前向推理的浮点操作数总量（FLOPs）**，`FLOPs` 以 T（万亿）为单位。
+
 | Model           | Parameters | Sequence Length | Batch Size | Hidden Size | Number of Layers | FLOPs (prefill)         |
 |-----------------|------------|-----------------|------------|-------------|------------------|----------------------------------|
 | GPT-3 (175B)    | 175B       | 2048            | 8          | 12288       | 96               | ~7.0 × 10³ T FLOPs                |
@@ -354,9 +355,9 @@ $$\begin{aligned}\text{inference\_memory} &\simeq [n(12h^2 + 13h) + Vh]*2 + 8bsh
 
 实际场景中的并发请求具有稀疏性，不可能每个请求都是 `2048` 这么长的上下文长度，因此实际上 200 台 8 卡 V100 服务器能服务的并发请求数目应该远多于 10000，可能是几倍。
 
-2，**对于 llama-65b 模型而言，其推理时，每个 token 大约消耗 `2.5MB`（估算的 $4nh = 4*80*8192 / (1024*1024) = 2.5 \text{MB}$）的显存**，因此，极限情况下每个请求需要的显存是 5GB。
-- 在模型权重为 float16 的情况下，支持的理论 batch 上限为 （32*8 - 121.6）/ 5 = 26.88。
-- 在模型权重为 int8 的情况下，支持的理论 batch 上限为 （32*8 - 121.6/2）/ 5 = 39.04。（deepspeed 框架不支持 llama 模型的 int8 量化）
+2，**对于 llama-65b 模型而言，其推理时，每个 token 大约消耗 `2.5MB`（估算的 $4nh = 4\ast 80\ast 8192 / (1024\ast 1024) = 2.5 \; \text{MB}$）的显存**，因此，极限情况下每个请求需要的显存是 5GB。
+- 在模型权重为 float16 的情况下，支持的理论 batch 上限为 （32 * 8 - 121.6）/ 5 = 26.88。
+- 在模型权重为 int8 的情况下，支持的理论 batch 上限为 （32 * 8 - 121.6/2）/ 5 = 39.04。（deepspeed 框架不支持 llama 模型的 int8 量化）
 
 另外，如果输入能量化为 int8 数据类型，理论上支持的 batch 数量会翻倍。
 
