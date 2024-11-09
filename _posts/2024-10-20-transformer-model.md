@@ -282,7 +282,7 @@ Encoder 和 Decoder 结构中公共的 `layer` 之一是 `Multi-Head Attention`�
 
 1. 计算注意力得分：查询矩阵与键矩阵的转置相乘，得到注意力得分矩阵。
 2. 缩放：除以 $\sqrt{d_k}$
-3. 应用掩码：根据任务需求应用掩码，将未来位置或填充位置对应值置为 `-inf`。
+3. 应用掩码：根据任务需求应用掩码，将未来位置或填充位置对应值置为 `-inf`。注意，对于训练无需 mask 操作，对于 推理只有 `prefill` 阶段需要 `mask`，用了 kv cache 优化的 `decode` 阶段不需要 `mask` 操作。
 4. 归一化：通过 `softmax` 函数将注意力得分归一化为概率分布。
 5. 加权求和：将归一化后的注意力得分与值矩阵相乘，得到最终的注意力输出。
 
@@ -308,19 +308,21 @@ self-attention 的矩阵计算形式如下图所示:
 >>> import torch
 >>> seq_len = 4
 >>> qkt = torch.randn([seq_len, seq_len])
->>> masked = torch.triu(torch.ones([seq_len, seq_len])
+>>> masked = torch.tril(torch.ones([seq_len, seq_len])) # 返回矩阵的下三角部分
 >>> masked
-tensor([[1., 1., 1., 1.],
-        [0., 1., 1., 1.],
-        [0., 0., 1., 1.],
-        [0., 0., 0., 1.]])
+tensor([[1., 0., 0., 0.],
+        [1., 1., 0., 0.],
+        [1., 1., 1., 0.],
+        [1., 1., 1., 1.]])
 >>> qkt = qkt.masked_fill(masked == 0, float('-inf'))
 >>> qkt
-tensor([[-0.0881,  0.8683, -0.4806,  0.1423],
-        [   -inf,  0.4457, -0.1422,  1.2504],
-        [   -inf,    -inf,  0.3100,  1.5813],
-        [   -inf,    -inf,    -inf, -1.8580]])
+tensor([[-1.6050,    -inf,    -inf,    -inf],
+        [-1.1192, -1.2447,    -inf,    -inf],
+        [ 0.4535,  0.3408,  1.4592,    -inf],
+        [-1.1595,  1.1121,  0.7202, -0.1808]])
 ```
+
+值得注意的是，在类 gpt 的 decoder-only 架构的模型中，是通过**上三角矩阵**实现了在自回归的过程中，使其只能看到左侧部分，看不到右侧部分的信息。然后得到了不包含pad 和上三角的 attn_mask。
 
 **softmax 归一化**。得到 $\text{Mask}$ $QK^T$ 之后在 $\text{Mask}$ $QK^T$ 上进行 Softmax，每一行的和都为 1。但是单词 0 在单词 1, 2, 3, 4 上的 `attention score` 都为 0。这符合我们因果模型的性质，毕竟我们只关心当前 token 与之前 token 的注意力（相似度）关系！
 
