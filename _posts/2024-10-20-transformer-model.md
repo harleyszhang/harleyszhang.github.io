@@ -275,6 +275,14 @@ Encoder 和 Decoder 结构中公共的 `layer` 之一是 `Multi-Head Attention`�
 <img src="../images/transformer_code/scale_dot_product_attention.jpeg" width="60%" alt="../images/transformer_code/scale_dot_product_attention.jpeg">
 </div>
 
+通过上述结构图，我们可以知道自注意力的计算步骤如下所示：
+
+0. 线性变换：输入序列通过三个线性层分别生成查询（Query）、键（Key）和值（Value）矩阵。
+1. 计算注意力得分（并除以 $\sqrt{d_k}$）：查询矩阵与键矩阵的转置相乘，得到注意力得分矩阵。
+2. 应用掩码：根据任务需求应用掩码，过滤掉不需要关注的位置（如未来位置或填充位置）。
+3. 归一化：通过 softmax 函数将注意力得分归一化为概率分布。
+4. 加权求和：将归一化后的注意力得分与值矩阵相乘，得到最终的注意力输出。
+
 那么重点来了，第一个问题：Self-Attention 结构的最初输入 **Q(查询), K(键值), V(值)** 这三个矩阵怎么理解呢？其代表什么，通过什么计算而来？
 
 在 Self-Attention 中，Q、K、V 是在**同一个输入（比如序列中的一个单词）上计算得到的三个向量**。具体来说，我们可以通过对原始输入**词的 embedding** 进行线性变换（比如使用一个全连接层），来得到 Q、K、V。这三个向量的维度通常都是一样的，取决于模型设计时的决策。
@@ -670,7 +678,7 @@ Transformer 模型特性：
 
 ### 5.1 Transformer 完整代码实现
 
-基于前面实现的 Encoder 和 Decoder 组件，我们可以实现 Transformer 模型的完整代码，如下所示:
+基于前面实现的 `Encoder` 和 `Decoder` 组件，我们就可以实现 Transformer 模型的完整代码，如下所示:
 
 ```python
 import torch
@@ -742,6 +750,8 @@ class Transformer(nn.Module):
 
         return mask
 ```
+
+总结：到此，本文详细分析了 transformer 架构以及各个 layer 的结构，并基于 pytorch 实现了 transformer 结构代码。后续想深入理解 transformer 的清晰计算过程，可以参考这个 [github 文档](https://github.com/hkproj/pytorch-llama/blob/main/Slides.pdf)。
 
 ## 参考资料
 
