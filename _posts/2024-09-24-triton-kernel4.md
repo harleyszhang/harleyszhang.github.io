@@ -21,3 +21,4 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 - [FlashAttentions](https://jcf94.com/2024/02/24/2024-02-24-flash-attention/)
 - [榨干 GPU 效能的 Flash Attention 3](https://tomohiroliu22.medium.com/%E6%A6%A8%E4%B9%BEgpu%E6%95%88%E8%83%BD%E7%9A%84flashattention%E7%AC%AC%E4%B8%89%E4%BB%A3-4a8b0a2a812e)
+- [FlashAttention算法之美：极简推导版](https://zhuanlan.zhihu.com/p/4264163756)
