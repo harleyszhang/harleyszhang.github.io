@@ -482,6 +482,7 @@ $$
 D_{r, xy}' &= D_{r, x}' * e^{M_{r, x} - M_{r, xy}} + D_{r, y}' * e^{M_{r, y} - M_{r, xy}}\\
 O_{r,c,xy}' &= O_{r,c,x}' * \frac{e^{M_{r, x}-M_{r, xy}}D_{r, x}'}{D_{r, xy}'} + O_{r,c,y}' * \frac{e^{M_{r, y}-M_{r, xy}}D_{r, y}'}{D_{r, xy}'}\\
 \end{aligned}$$
+> 有问题，需要更新。
 
 因此，FlashAttention-1 的分块计算 python 代码如下。
 
@@ -556,6 +557,9 @@ def block_flashattn(Q, K, V, block_size=32):
             
     return O
 ```
+
+注意，前面内容的 FlashAttention 的 numpy 实现都是参考[这里](https://jcf94.com/2024/02/24/2024-02-24-flash-attention/)，但是这种实现和 FlashAttention 论文的公式和算法实现有些不同！仅供参考。
+
 ### 2.5 FlashAttention
 
 FlashAttention-v1 其实并没有提出新的算法和网络结构上的优化，但是其在算法上综合了过往的两个创新点：**分块**和**重计算**，并将其应用于 Attention 结构，给出了详尽的数学计算、证明和 IO 复杂度分析（论文长达 34 页大头都是公式），可以说是过往 transformer 模型在 gpu 上优化的**集大成者**，而且最重要的是提供了非常易用的前向传播和反向传播的代码库，这使得其广为引用和应用于工业界。
@@ -689,50 +693,48 @@ def flash_attention_v1_kernel(
     out_ptrs = o_ptr + o_offs
 
     # 初始化用于计算 softmax 归一化项的 m 和 d, 意义见 online-softmax, 这里
-    l_i = tl.zeros((BLOCK_M_SIZE,), dtype=tl.float32) - float("inf")
+    # 初始化用于计算 softmax 归一化项的 m 和 d, 意义见 online-softmax, 这里
+    m_i = tl.zeros((BLOCK_M_SIZE,), dtype=tl.float32) - float("inf")
     d_i = tl.zeros((BLOCK_M_SIZE,), dtype=tl.float32)
-    acc = tl.zeros((BLOCK_M_SIZE, BLOCK_DHEAD_SIZE), dtype=tl.float32)
-    
+    o_i = tl.zeros((BLOCK_M_SIZE, BLOCK_DHEAD_SIZE), dtype=tl.float32)
+
     q_mask = m_offs[:, None] < m_size
     q = tl.load(q_ptrs, mask=q_mask, other=0.0)
 
     for block_n_start_idx in range(0, n_size, BLOCK_N_SIZE):
         block_n_offs = block_n_start_idx + n_range_offs
         k_mask = block_n_offs[:, None] < n_size
-        k = tl.load(k_ptrs + block_n_start_idx * k_seq_stride, mask=k_mask, other=0.0)
-        
+        k = tl.load(k_ptrs + block_n_start_idx * k_seq_stride, mask=k_mask, other=0.0
+
+        # qk^t 初始化赋值 0
         qk = tl.zeros((BLOCK_M_SIZE, BLOCK_N_SIZE), dtype=tl.float32)
-        qk += tl.dot(q, tl.trans(k))
-        qk *= sm_scale
+        qk = tl.dot(q, tl.trans(k))
+        qk *= scale # scale 是 \sqrt{d_k}
 
-        l_j = tl.max(qk, 1)
-        numerators = tl.exp(qk - l_j[:, None])
-        d_j = tl.sum(numerators, 1) # 1d vector
+        m_j = tl.max(qk, 1)
+        n_j = tl.exp(qk - m_j[:, None])   # 计算 softmax 的分子项
+        d_j = tl.sum(n_j, 1)     # 计算 softmax 的分母项，即归一化项
 
-        l_new = tl.maximum(l_i, l_j)
-        alpha = tl.exp(l_i - l_new)
-        beta = tl.exp(l_j - l_new)
-        d_new = alpha * d_i  + beta * d_j
+        m_new = tl.maximum(m_j, m_i) # 更新 qk^t 最大值
         
-        # compute softmax(qk)
+        alpha = tl.exp(m_i - m_new)
+        beta = tl.exp(m_j - m_new)
+        d_new = alpha * d_i + beta * d_j
+
+        scale1 = d_i / d_new * alpha 
+        o_i = o_i * scale[:, None]
+        
         p_scale = beta / d_new
-        p = numerators * p_scale[:, None]
-        # acc scaling
-        sigma = d_i / d_new * alpha
-        acc = acc * sigma[:, None]
-        
-        # compute O = PV
-        v = tl.load(v_ptrs + block_n_start_idx * v_seq_stride, mask=k_mask, other=0.0)
-        p = p.to(q_ptr.dtype.element_ty)
+        qk_softmax = n_j * p_scale[:, None]
+        V = tl.load(v_ptrs + block_n_start_idx * v_k_stride, mask=v_ptr_mask, other=0.0)
+        o_i += tl.dot(qk_softmax, V)
 
-        acc += tl.dot(p, v)
-
-        # update the normalizer (l and d) for next iteration
-        l_i = l_new
+        # 更新 m_i、d_i、o_i 用于下一轮计算
+        m_i = m_new
         d_i = d_new
-    
+
     out_mask = m_offs[:, None] < m_size
-    tl.store(out_ptrs, acc, mask=out_mask)
+    tl.store(out_ptrs, o_i, mask=out_mask)
 
 @torch.no_grad()
 @custom_fwd(cast_inputs=torch.float16)
@@ -804,83 +806,7 @@ OD[i] &= OD[i-1] * E + E*V \nonumber \\
 O[i] &= OD[i] / D[i] \nonumber
 \end{align}$$
 
-这样公式就大大简化了，减少了 FlashAttention 的计算量。对应的 python 代码：
-
-```python
-#                      m, d, m0, d0, o0, m1, d1, o1):
-def flashattn_2_update(m,    m0,     od0, m1, d1, od1):
-    #                        |       |   |   |   |
-    #                        |       |   x   v   1
-    # Init value:           MIN_M    0
-    od = od0 * np.exp(m0 - m) + od1 * np.exp(m1 - m) * d1
-    return od
-
-def block_flashattn2(Q, K, V, block_size=32):
-    N, Dim = Q.shape
-    
-    # 1, Load Q K and write S. and Compute S[r][i] by matrix multiply 
-    S = np.zeros([N, N], "float32")
-    O = np.zeros([N, Dim], "float32")
-        
-    for r in range(0, N):
-       for i in range(0, N):
-           # QK^T
-           for j in range(0, Dim):
-               S[r][i] += Q[r][j] * K[i][j]
-    
-    for r in range(0, N):  
-        # Softmax
-        mm = np.zeros([N],  "float32")
-        dd = np.zeros([N],  "float32")
-        m = np.zeros([N // block_size],  "float32")
-        d = np.zeros([N // block_size],  "float32")
-        
-        for b in range(0, N // block_size):
-            # Calculate m,d of single block
-            for i in range(0, block_size):
-                mm[b*block_size + i], dd[b*block_size + i] = online_softmax_update(
-                    mm[b*block_size + i-1] if i > 0 else MIN_M,
-                    dd[b*block_size + i-1] if j > 0 else 0,
-                    S[r, b*block_size + i], 
-                    1,
-                )
-            
-            # Merge all block's result to total
-            m[b], d[b] = online_softmax_update(
-                m[b-1] if b > 0 else MIN_M,
-                d[b-1] if b > 0 else 0,
-                mm[(b + 1) * block_size - 1], # 当前块的 mm 和  dd
-                dd[(b + 1) * block_size - 1])
-        
-        # PV: [N, N] * [N, Dim] -> [N, dim]
-        for c in range(0, Dim):
-            o = 0
-            for b in range(0, N //block_size):
-                # Calculate single block
-                od = 0
-                for i in range(0, block_size):
-                    od = flashattn_2_update(
-                        mm[b * block_size + i], # 当前迭代位置的 m
-                        mm[b * block_size + i-1] if i > 0 else MIN_M,
-                        od,
-                        S[r, b * block_size + i], # 当前迭代位置的 s[r,i]
-                        V[b * block_size + i, c],
-                        1
-                    )
-                
-                # Merge all blocks to total
-                o = flashattn_2_update(
-                    m[b],                              # 当前迭代 block 的 m
-                    m[b - 1] if b > 0 else MIN_M,
-                    o, # 上一个 block 的结果
-                    mm[(b + 1) * block_size - 1],      # m1
-                    dd[(b + 1) * block_size - 1],      # d1
-                    od / dd[(b + 1) * block_size - 1], # od1 
-                )
-            O[r][c] = o / d[b - 1] # 上一轮 block 的 d
-            
-    return O
-```
+这样公式就大大简化了，减少了 FlashAttention 的计算量。
 
 ## 4. FlashAttention-3
 
