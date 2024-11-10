@@ -17,6 +17,21 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 其中，$d_k$ 是键向量的维度，用于缩放点积结果以防止梯度消失。
 
+而 flashattention 是基于分块思想，如下图所示，我们从左向右计算有颜色的部分，对于 Q 增加一个外层循环，KV 增加内层循环长度，K1, K2, K3,… & V1, V2, V3, …，图中规模较小，但是泛化到更多块数据是一样的公式。
+
+<div align="center">
+<img src="../images/triton_tutorials4/flashattention_tileing_visual.jpg" width="60%" alt="flashattention_tileing_visual">
+</div>
+
+而想要复现 flash-attention 算法，我们得先回顾下 flashattention 的算法公式，这里为了方便从公式推导代码，公式部分我做了简化。
+
+1，先看下标准 attention 计算公式：
+
+$$\text{S = QK}^\text{T} \in \mathbb{R}^{N\times N},\quad \text{P = softmax(S)} \in \mathbb{R}^{N\times N},\quad \text{O = PV}\in \mathbb{R}^{N\times d}$$
+
+2，前面的总结文章已经知道了 flashattention 是基于 online softmax 进一步延伸到 attention 的计算中去的，由此，先看下 online softmax 的简化公式。
+
+
 ### 参考资料
 
 - [FlashAttentions](https://jcf94.com/2024/02/24/2024-02-24-flash-attention/)

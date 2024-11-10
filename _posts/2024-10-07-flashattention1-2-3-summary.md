@@ -113,7 +113,11 @@ def safe_softmax(x):
 
 ### Online Softmax
 
-从 `Safe Softmax` 公式很明显看出，`MAC` 大原因是因为存在数据依赖：(2) 需要依赖 $m_N$, (3) 则需要依赖 $m_N$ 和 $d_N$。如果能**同时计算最大值 $m$ 和归一化项（normalization term）$d$，在一个 for 循环中得到最终的 $m_N$ 和 $d_N$**，则能直接减少 HBM 的访问次数（`MAC`），又因为 Softmax 典型情况都是内存受限，所以这肯定能提高 Softmax 算子的运行速度。
+从 `Safe Softmax` 公式很明显看出，`MAC` 大原因是因为存在数据依赖：
+- 公式 (2) 需要依赖 $m_N$；
+- 公式 (3) 则需要依赖 $m_N$ 和 $d_N$。
+
+但如果能**同时计算最大值 $m$ 和归一化项（normalization term）$d$，即在一个 for 循环中得到最终的 $m_N$ 和 $d_N$**，则能直接减少 HBM 的访问次数（`MAC`），又因为 Softmax 典型情况都是内存受限，所以这肯定能提高 Softmax 算子的运行速度。
 
 [Online normalizer calculation for softmax](https://arxiv.org/pdf/1805.02867) 论文将 3 步 safe softmax 合并成 2 步完成的方法，并证明了 $d_i'$ 存在如下递推性质：
 
@@ -371,7 +375,9 @@ O'_{r,c, i} &= \sum_{j=1}^i \frac{e^{S_{r, j} - M_{r, i}}}{D'_{r, i}} * V[j, c] 
 &= O'_{r,c, i-1} * \frac{e^{M_{r,i-1} - M_{r,i}} * D'_{r, i-1}}{D'_{r, i}} + \frac{e^{S_{r, i} - M_{r, i}}}{D'_{r,i}} * V[i, c] 
 \end{aligned}$$
 
-可以看到 $O'_{r, c, i}$ 仅仅和 $O'_{r, c, i-1}$ 以及 $S_{r, i}$、$M_{r, i-1}$、$D'_{r, i-1}$ 有关，不需要“规约”操作。这些变量都是可以在同一个 `for` 循环中计算得到的，即我们可以像 `onlinesoftmax` 那样在一个 $[i, N]$ 的循环中完成计算：
+<!-- 可以看到 $O_{r, c, i}'$ 仅仅和 $O_{r, c, i-1}'$ 以及 $S_{r, i}$、$M_{r, i-1}$、$D_{r, i-1}'$ 有关，不需要“规约”操作。这些变量都是可以在同一个 `for` 循环中计算得到的，即我们可以像 `online softmax` 那样在一个 $[i, N]$ 的循环中完成计算： -->
+
+![compute-s-m-d](../images/flash_attention1-3/compute-s-m-d.png)
 
 $$\begin{aligned}
 S_{r, i} &= \sum^{Dim}_{j=1}Q[r, j]K[j, i]\\
