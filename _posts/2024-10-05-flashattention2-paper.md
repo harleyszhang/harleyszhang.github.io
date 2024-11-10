@@ -168,6 +168,85 @@ FlashAttention-2 算法前向传播过程的完整流程在算法 1 中描述。
 <div align="center">
 <img src="../images/flashattention-2/algorithm1.png" width="60%" alt="algorithm1">
 </div>
+
+FlashAttention-2 的另一种 python 实现如下所示，代码参考[这里](https://jcf94.com/2024/02/24/2024-02-24-flash-attention/)，其中 attention 输出 $O_j$ 的更新和论文有些不同，仅供参考参考学习。
+
+```python
+#                      m, d, m0, d0, o0, m1, d1, o1):
+def flashattn_2_update(m,    m0,     od0, m1, d1, od1):
+    #                        |       |   |   |   |
+    #                        |       |   x   v   1
+    # Init value:           MIN_M    0
+    od = od0 * np.exp(m0 - m) + od1 * np.exp(m1 - m) * d1
+    return od
+
+def block_flashattn2(Q, K, V, block_size=32):
+    N, Dim = Q.shape
+    
+    # 1, Load Q K and write S. and Compute S[r][i] by matrix multiply 
+    S = np.zeros([N, N], "float32")
+    O = np.zeros([N, Dim], "float32")
+        
+    for r in range(0, N):
+       for i in range(0, N):
+           # QK^T
+           for j in range(0, Dim):
+               S[r][i] += Q[r][j] * K[i][j]
+    
+    for r in range(0, N):  
+        # Softmax
+        mm = np.zeros([N],  "float32")
+        dd = np.zeros([N],  "float32")
+        m = np.zeros([N // block_size],  "float32")
+        d = np.zeros([N // block_size],  "float32")
+        
+        for b in range(0, N // block_size):
+            # Calculate m,d of single block
+            for i in range(0, block_size):
+                mm[b*block_size + i], dd[b*block_size + i] = online_softmax_update(
+                    mm[b*block_size + i-1] if i > 0 else MIN_M,
+                    dd[b*block_size + i-1] if j > 0 else 0,
+                    S[r, b*block_size + i], 
+                    1,
+                )
+            
+            # Merge all block's result to total
+            m[b], d[b] = online_softmax_update(
+                m[b-1] if b > 0 else MIN_M,
+                d[b-1] if b > 0 else 0,
+                mm[(b + 1) * block_size - 1], # 当前块的 mm 和  dd
+                dd[(b + 1) * block_size - 1])
+        
+        # PV: [N, N] * [N, Dim] -> [N, dim]
+        for c in range(0, Dim):
+            o = 0
+            for b in range(0, N //block_size):
+                # Calculate single block
+                od = 0
+                for i in range(0, block_size):
+                    od = flashattn_2_update(
+                        mm[b * block_size + i], # 当前迭代位置的 m
+                        mm[b * block_size + i-1] if i > 0 else MIN_M,
+                        od,
+                        S[r, b * block_size + i], # 当前迭代位置的 s[r,i]
+                        V[b * block_size + i, c],
+                        1
+                    )
+                
+                # Merge all blocks to total
+                o = flashattn_2_update(
+                    m[b],                              # 当前迭代 block 的 m
+                    m[b - 1] if b > 0 else MIN_M,
+                    o, # 上一个 block 的结果
+                    mm[(b + 1) * block_size - 1],      # m1
+                    dd[(b + 1) * block_size - 1],      # d1
+                    od / dd[(b + 1) * block_size - 1], # od1 
+                )
+            O[r][c] = o / d[b - 1] # 上一轮 block 的 d
+            
+    return O
+```
+
 #### 3.1.2 反向传播
 
 FlashAttention-2 的反向传播与 FlashAttention 基本相同。只做了一个小改动，softmax 中仅使用按行的 logsumexp $L$，而不是同时使用按行最大值和按行指数和。反向传播过程的详细步骤在算法 2 中描述。
