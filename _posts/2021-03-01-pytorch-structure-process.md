@@ -271,6 +271,8 @@ tensor([[[ 0,  1,  2],
 
 另外，`torch.hstack` 函数用于将一系列张量沿水平方向（列方向）堆叠。对于一维张量，相当于直接按元素连接；对于二维及更高维张量，相当于沿第二个维度（列维度）堆叠。它是 torch.cat(tensors, dim=1) 的简便形式。
 
+`hstack` 是 horizontal stack（水平堆叠）的缩写。在 NumPy 和 PyTorch 等库中，hstack 函数都是用于沿水平方向（即列方向）将多个数组或张量堆叠在一起。它和 `vstack`（垂直堆叠）相对应，后者用于沿垂直方向（即行方向）堆叠数组或张量。
+
 两个二维张量的 `hstack` 操作过程可视化如下图所示:
 
 <div align="center">
