@@ -211,7 +211,9 @@ tensor([[ 0.1427, -0.5414],
         [-1.1734,  0.7230]])
 ```
 ## 四，合并分割
+
 ### 4.1，torch.cat 和 torch.stack
+
 可以用 `torch.cat` 方法和 `torch.stack` 方法将多个张量合并，也可以用 `torch.split`方法把一个张量分割成多个张量。`torch.cat` 和 `torch.stack` 有略微的区别，`torch.cat` 是连接，不会增加维度，而 `torch.stack` 是堆叠，会增加一个维度。两者函数定义如下：
 ```python
 # Concatenates the given sequence of seq tensors in the given dimension. All tensors must either have the same shape (except in the concatenating dimension) or be empty.
@@ -219,7 +221,9 @@ torch.cat(tensors, dim=0, *, out=None) → Tensor
 # Concatenates a sequence of tensors along **a new** dimension. All tensors need to be of the same size.
 torch.stack(tensors, dim=0, *, out=None) → Tensor
 ```
+
 `torch.cat` 和 `torch.stack` 用法实例代码如下：
+
 ```python
 >>> a = torch.arange(0,9).view(3,3)
 >>> b = torch.arange(10,19).view(3,3)
@@ -264,6 +268,15 @@ tensor([[[ 0,  1,  2],
          [23, 24, 25],
          [26, 27, 28]]))
 ```
+
+另外，`torch.hstack` 函数用于将一系列张量沿水平方向（列方向）堆叠。对于一维张量，相当于直接按元素连接；对于二维及更高维张量，相当于沿第二个维度（列维度）堆叠。它是 torch.cat(tensors, dim=1) 的简便形式。
+
+两个二维张量的 `hstack` 操作过程可视化如下图所示:
+
+<div align="center">
+<img src="../images/pytorch_tensor_structure/hstack_visual.png" width="60%" alt="hstack_visual">
+</div>
+
 ### 4.2，torch.split 和  torch.chunk
 `torch.split()` 和 `torch.chunk()` 可以看作是 `torch.cat()` 的逆运算。`split()` 作用是将张量拆分为多个块，每个块都是原始张量的视图。`split()` [函数定义](https://pytorch.org/docs/stable/generated/torch.split.html#torch.split)如下：
 ```python
