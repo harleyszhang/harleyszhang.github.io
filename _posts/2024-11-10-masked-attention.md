@@ -2,7 +2,7 @@
 layout: post
 title: masked-attention 算法详解
 date: 2024-11-10 05:30:00
-summary: Casual Mask 机制的本质是为了构建下三角（上三角）的注意力分数矩阵，从而实现因果模型只关注当前 token 与之前 token 的注意力关系，而不理会它与后续 token 的关系，即只"看"当前及前面的 tokens。
+summary: Casual Mask 机制的本质是为了构建下三角的注意力分数矩阵，从而实现因果模型只关注当前 token 与之前 token 的注意力关系，而不理会它与后续 token 的关系，即只"看"当前及前面的 tokens。
 categories: Transformer
 ---
 
