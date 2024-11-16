@@ -902,7 +902,9 @@ class SelfAttnBlockSpaceManager(BlockSpaceManager):
 
 `CacheEngine` 给GPU分配空间的方式，本质上通过 `pytorch` 的接口在 `gpu` 上分配 `num_blocks` 大小的零 `tensor` 来作为物理块的空间的，而不是直接使用 `cudaMalloc` 进行操作的。
 
-和 `token_attention` 直接提前分配一个可用最大形状的 `Tensor` 后续 kv cache 的获取和释放都从这里操作不同。`PagedAttention` 为 transformer 模型的每个 layer 都分配一个 `tensor`，并组合成列表的形式。也就是如果模型为 layer 为 16，对应的 kv cache 就是一个拥有 16 个 `tensor` 的列表。
+和 [lightllm](https://github.com/ModelTC/lightllm) 的 `tokenattention` 直接提前分配一个可用最大形状的 `Tensor`，且后续 kv cache 的获取和释放都从这里操作不同。`PagedAttention` 为 transformer 模型的每个 layer 都分配一个**可用最大尺寸**的 `tensor`，并组合成列表的形式。也就是如果模型为 layer 为 16，对应的 kv cache 就是一个拥有 16 个 `tensor` 的列表。
+
+代码通过循环遍历 self.num_attention_layers，**为每个层分配独立的 KV 缓存张量**，确保每层的 kv 张量能够被单独存储和访问，避免不同层之间的干扰。`num_gpu_blocks` 会通过 `model_executor.determine_num_available_blocks` 函数获取当前模型在指定设备上的每个 `layer` 的最大可用物理 `blocks` 数目。
 
 <div align="center">
 <img src="../images/vllm_pagedattention/_allocate_kv_cache.png" width="60%" alt="_allocate_kv_cache">
@@ -948,6 +950,8 @@ def get_cache_block_size(
 
     key_cache_block = block_size * num_heads * head_size
     value_cache_block = key_cache_block
+    
+    # 每层 layer 的 block size
     total = num_layers * (key_cache_block + value_cache_block)
     if cache_dtype == "auto":
         dtype = model_config.dtype
@@ -957,7 +961,7 @@ def get_cache_block_size(
     return dtype_size * total
 ```
 
-`gpu_work.py` 中的实现的计算逻辑和 `cpu_work.py` 一样，不同的是，这里借助了 `torch.cuda.mem_get_info()` 函数直接获取 gpu 总内存和在加载完模型之后的剩余显存。
+`gpu_work.py` 中的实现的计算逻辑和 `cpu_work.py` 一样，不同的是，这里借助了 `torch.cuda.mem_get_info()` 函数直接获取 gpu 总内存和在加载完模型之后的剩余显存。另外，用户在启动 llm 服务时，`--block-size` 参数可设置的取值范围是 `{8,16,32,64,128}`，默认值是 `16`。
 
 ```python
 @torch.inference_mode()
