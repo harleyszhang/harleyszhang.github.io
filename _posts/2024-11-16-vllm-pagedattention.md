@@ -88,7 +88,9 @@ void paged_attention_v1(
 void paged_attention_v2()
 ```
 
-PagedAttention 本质上是集合了 kv cache 动态管理技术的 flashattention。PagedAttention 的内核实现有两个版本 `paged_attention_v1_kernel` 和 `paged_attention_v2_kernel`，这两个版本分别对应的都是 flashattentionv1 和 flashattentionv2 的计算逻辑，且它们都是基于 `paged_attention_kernel` 内核通过输入不同参数来实现的，v2 内核版本多了一个 kv cache seq 维度分区数量的参数，并行度层面多了 kv cache  `seq` 层面的并行度！
+PagedAttention 本质上是集合了 kv cache 动态管理技术的优化版 `flashattention`。PagedAttention 的内核实现有两个版本 `paged_attention_v1_kernel` 和 `paged_attention_v2_kernel`，v1 改编自FasterTransformers 的 `MHA` 实现，适合长度小于 `8192` 或者 `num_seqs * num_heads > 512` 的情况，v2 是参考 `FlashDecoding` 方式进行实现，对 `sequence` 维度进行切分以增加并行粒度。
+
+这两个版本的内核都是基于 `paged_attention_kernel` 内核通过输入不同参数来实现，v2 内核版本多了一个 kv cache **seq 维度分区数量**的参数，并行度层面多了 `kv cache` `seq` 分区的并行度！
 > flashattention 两种算法实现集成在一个内核里，这还是很考验作者工程功底的！
 
 <div align="center">
