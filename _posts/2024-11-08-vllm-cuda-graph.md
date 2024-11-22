@@ -99,15 +99,14 @@ class GPUModelRunnerBase():
 		input_tokens = torch.zeros(max_batch_size, dtype=torch.long).cuda()
 		# 创建全零的输入位置张量，形状为 (max_batch_size,)
 		input_positions = torch.zeros(max_batch_size, dtype=torch.long).cuda()
-		# 获取要捕获的批量大小列表，确保批量大小不超过最大批量大小
+		
+        # 获取要捕获的批量大小列表，确保批量大小不超过最大批量大小
 		graph_batch_size = self.max_batchsize_to_capture
 		batch_size_capture_list = [bs for bs in _BATCH_SIZES_TO_CAPTURE if bs <= graph_batch_size]
-		
-		# 使用注意力状态的图捕获上下文和通用的图捕获上下文
-    	with self.attn_state.graph_capture(max_batch_size), graph_capture() as graph_capture_context:
+        # 使用注意力状态的图捕获上下文和通用的图捕获上下文
+        with self.attn_state.graph_capture(max_batch_size), graph_capture() as graph_capture_context:
 			# 反向遍历批量大小列表，从大到小
             for batch_size in reversed(batch_size_capture_list):
-
 				# 获取指定批量大小的注意力元数据
                 attn_metadata = self.attn_state.graph_capture_get_metadata_for_batch(
                     batch_size,
