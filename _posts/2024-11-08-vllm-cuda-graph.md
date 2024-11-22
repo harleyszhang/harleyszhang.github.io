@@ -131,8 +131,6 @@ class GPUModelRunnerBase():
                 self.graph_memory_pool = graph_runner.graph.pool()
                 # 将捕获的图运行器存储到 graph_runners 中
         		self.graph_runners[batch_size] = graph_runner
-]
-
 ```
 
 `SchedulerConfig` 是调度配置类，`max_num_seqs`  是 `SchedulerConfig` 类的初始化参数之一，表示单次迭代中可处理的最大序列数，可以理解为传统意义上的 `max_batch_size`。`batch_size_capture_list` 是一个 batch_size 列表，前三个元素是 1 2 4 后面的元素值间隔 8 并小于调度类中的 `max_num_seqs` 参数值。
@@ -153,7 +151,7 @@ class GPUModelRunnerBase():
 - 图执行： 在推理过程中，执行已实例化的 CUDA 图，提高执行效率。
 
 <div align="center">
-<img src="../../images/cuda_graph/CUDAGraphRunner_class.png" width="60%" alt="CUDAGraphRunner class">
+<img src="../images/cuda_graph/CUDAGraphRunner_class.png" width="60%" alt="CUDAGraphRunner class">
 </div>
 
 其中关键的 `capture` 函数看起来代码很多，但核心逻辑就是执行捕获 `graph` 和定义输入输出 `placeholder` 的操作，具体的精简版代码如下所示：
