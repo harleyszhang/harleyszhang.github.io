@@ -158,7 +158,7 @@ class GPUModelRunnerBase():
 - 图执行： 在推理过程中，执行已实例化的 CUDA 图，提高执行效率。
 
 <div align="center">
-<img src="../../images/cuda_graph/CUDAGraphRunner_class.png" width="60%" alt="CUDAGraphRunner class">
+<img src="../images/cuda_graph/CUDAGraphRunner_class.png" width="60%" alt="CUDAGraphRunner class">
 </div>
 
 其中关键的 `capture` 函数看起来代码很多，但核心逻辑就是执行捕获 `graph` 和定义输入输出 `placeholder` 的操作，具体的精简版代码如下所示：
@@ -188,6 +188,16 @@ def capture()：
 	self.output_buffers = hidden_or_intermediate_states
 ```
 
+值得注意的是，参数 kv_caches 必须传入实值，它的传入比较复杂，调用关系依次是: 
+
+```bash
+CUDAGraphRunner.capture(kv_caches: List[torch.Tensor])
+    └── GPUModelRunnerBase.capture_model(kv_caches: List[List[torch.Tensor]])
+        └── Worker._warm_up_model()
+            └── Worker._init_cache_engine()
+                └── self.gpu_cache = []
+```
+
 ## 三 cuda graph 原理
 
 CUDA Graph 是 NVIDIA 引入的一项技术，旨在降低 CUDA 操作的 CPU 开销并优化 GPU 上的执行。其**核心原理**包括：
@@ -211,6 +221,15 @@ CUDA Graph 的性能优化的关键点在于：
 3. **提高 GPU 利用率**：
     - **减少 kernel 同步**：图内的操作依赖关系已经明确，减少了不必要的同步操作，提高了并行度。
     - 优化调度：由于整个操作序列在图中是已知的，CUDA Graph 可以更有效地调度内核和内存操作，减少 GPU 空闲时间。
+
+Pytorch CUDA Graph 的实践，如果违反以下条件，可能会导致无声的数值错误或未定义行为：
+- 在一个进程中，同一时间只能进行一次捕获。
+- 捕获（capture）期间，不允许在该进程中（任何线程上）运行非捕获的 CUDA 操作。
+- CPU 操作不会被捕获。如果捕获的操作包括 CPU 操作，这些操作将在重放时被忽略。
+- 每次重放都会从相同的（虚拟）内存地址读取和写入数据。
+- 禁止基于 CPU 或 GPU 数据的动态控制流。
+- **禁止动态形状**。图假设捕获的操作序列中**每个张量**在每次重放中具有相同的大小和布局。
+- 在捕获中使用多个流是允许的，但存在一些限制。
 
 ## 三 cuda graph 实践
 
@@ -352,3 +371,4 @@ if __name__ == "__main__":
 ## 参考资料
 
 - [浅谈cuda graph在llm推理中的应用](https://zhuanlan.zhihu.com/p/715863693)
+- [Pytroch CUDA Graphs](https://pytorch.org/docs/main/notes/cuda.html#cuda-graphs)
