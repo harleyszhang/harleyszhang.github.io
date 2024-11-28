@@ -68,3 +68,4 @@ $$H_v = W\cdot X_v, with Z_v = g(X_v)$$
 
 - [Visual Instruction Tuning](https://arxiv.org/pdf/2304.08485)
 - [Improved Baselines with Visual Instruction Tuning](https://arxiv.org/pdf/2310.03744)
+- [【多模态大模型】llava系列：llava、llava1.5、llava-next](https://zhuanlan.zhihu.com/p/695100288)
