@@ -2,7 +2,7 @@
 layout: post
 title: LLaVA 系列模型结构详解
 date: 2024-11-28 11:50:00
-summary: 多模态大模型 `MLLM` 架构通常都是: LLM + 视觉编码器 + 映射层的组合。本文详细总结了 LLaVA 系列多模态模型的模型结构，以及视觉编码器如何支持高分辨率输入图像。
+summary: 多模态大模型 MLLM 架构通常都是 LLM + 视觉编码器 + 映射层的组合。本文详细总结了 LLaVA 系列多模态模型的模型结构，以及视觉编码器如何支持高分辨率输入图像。
 categories: Transformer
 ---
 
