@@ -321,6 +321,8 @@ def fused_ffn(
 
 对于矩阵乘法 $A*B=C$，$A$ 的大小是 $M \times K$, $B$ 是 $K\times N$，$C$ 的大小是 $M\times N$, 分块矩阵优化的思路是每次只算出 $C$ 的一部分，假设每次"循环"算的大小是 $\text{BLOCK\_SIZE\_M} \times \text{BLOCK\_SIZE\_N}$ , 那么总共要 "循环" $\frac{M}{\text{BLOCK\_SIZE\_M}} \times \frac{N}{\text{BLOCK\_SIZE\_N}}$ 次。
 
+<img src="../images/triton_tutorials2/math1.png" width="100%" alt="math1">
+
 <img src="../images/triton_tutorials2/tiled_matrix_multiplication.png" width="70%" alt="tiled_matrix_multiplication">
 
 循环次数（也是 grid 大小，kernel 程序实例数，block 数目）确定了，但是按照什么样的顺序来循环（读区数据的顺序和范围）是有不同选择的，不同的选择会影响 kernel 的内存访问效率。
