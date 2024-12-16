@@ -24,7 +24,8 @@ categories: LLM_Infer
 
 PagedAttention 算法的原理可以参考我前面写的文章[vllm优化技术速览](https://www.armcvai.cn/2024-10-26/vllm-optimize.html)。从源码的角度来看 PagedAttention，其实可以分为两部分:
 - PagedAttention Kernel 的实现，这里 v1 算法计算逻辑部分和标准 attention 差不多（v2 计算逻辑和 flashattentionv2 一致），但是 kv cache 的分配和管理使用了  kv cache 动态管理、存取优化技术。
-- PagedAttention 的对 kv cache 的内存分配管理技术，之前的 kv cache 在 `seq` 这个维度都是固定为最大输入尺寸的 `max_seq_len`, 但实际单个请求不会把这么多内存消耗完，这必然会造成大量的内存浪费和碎片化，如下图所示。因此 PagedAttention 算法基于 操作系统的 `page table` 思想构建了 `block table` 来动态分配 kv cache 内存，这种动态 kv cache 内存的算法（思想）是可以应用到其他 llm 推理服务框架中。
+- PagedAttention 的对 kv cache 的内存分配管理技术（KV cache manager），之前的 kv cache 在 `seq` 这个维度都是固定为最大输入尺寸的 `max_seq_len`, 但实际单个请求可能消耗这么多内存，且在请求推理结束后也没有释放对应内存的功能，这必然会造成大量的内存浪费和碎片化。由此 PagedAttention 算法基于操作系统的 `page table` 思想构建了 `block table` 来动态分配管理 kv cache 内存，下图很好的展示了相比早前的其他推理框架，LLM 在显存利用率上极高。
+> 这种 kv cache 内存管理分配的算法（思想）是可以应用到其他 llm 推理服务框架中。
 
 <div align="center">
 <img src="../images/vllm_pagedattention/llm_memory_waste.png" width="60%" alt="llm_memory_waste">
