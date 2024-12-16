@@ -73,7 +73,13 @@ categories: Transformer
 - `hidden_​​size`：模型的隐藏层大小，其实就是 $d_\text{model}$。
 - `num_attention_heads`：模型的多头注意力层中使用的**注意力头数量**。
 - `num_hidden_layers`：模型中的块数（层数）, number of layers。
-- `max_sequence_length`: $2048$, 即代表预训练的 LLaMA 模型的最大 Context Window 只有 $2048$。
+- `max_sequence_length`: $2048$, 即代表预训练的 LLaMA 模型的最大 Context Window 只有 $2048$，也是模型支持的最大输入上下文长度。
+
+后续的 llama2-3/qwen2 模型都用 `max_position_embeddings` 参数表示模型支持的最大输入上下文长度，比如qwen2.5-3b 模型支持的最大上下文长度为 `32768`(32k)。
+
+<center>
+<img src="../images/transformer_params_flops/qwen2.5-3b-config.png" width="50%" alt="qwen2.5-3b-config">
+</center>
 
 注意，很多 `decoder-only` 架构的自回归模型的全连接层的偏置 `bias` 都设置为 False，故这里的计算公式中没有考虑偏置参数。
 
