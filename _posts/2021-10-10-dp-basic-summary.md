@@ -122,7 +122,7 @@ categories: DeepLearning
 + padding的像素数 `P`
 + 输出特征图大小 `N×N`
 
-2，特征图经反卷积（也叫转置卷积） `keras-Conv2DTranspose`（`pytorch-ConvTranspose2d`） 后得到的特征图大小计算方式：$out = (in - 1) *s -2p + k$，还有另外一个写法：$W = (N - 1)*S - 2P + F$，可由卷积输出大小计算公式反推得到。$in$ 是输入大小， $k$ 是卷积核大小， $s$ 是滑动步长， `padding` 的像素数 $p$，$out$ 是输出大小。
+2，特征图经反卷积（也叫转置卷积） `keras-Conv2DTranspose`（`pytorch-ConvTranspose2d`） 后得到的特征图大小计算方式：$out = (in - 1)s -2p + k$，另外还有一个写法：$W = (N - 1)*S - 2P + F$，这可由卷积输出大小计算公式反推得到。$in$ 是输入大小， $k$ 是卷积核大小，$s$ 是滑动步长， `padding` 的像素数 $p$，$out$ 是输出大小。
 
 **反卷积**也称为转置卷积，一般主要用来还原 `feature map` 的尺寸大小，在 `cnn` 可视化，`fcn` 中达到 `pixel classification`，以及 `gan` 中从特征生成图像都需要用到反卷积的操作。反卷积输出结果计算实例。例如，输入：`2x2`， 卷积核大小：`4x4`， 滑动步长：`3`，填充像素为 `0`， 输出：`7x7` ，其计算过程就是， `(2 - 1) * 3 + 4 = 7`。
 
