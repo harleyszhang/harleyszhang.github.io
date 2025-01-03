@@ -586,6 +586,10 @@ H100 提供了高达 `80GB` 的 GPU 显存和 `3.35TB/s`（H100 SXM）的显存�
  -->
 <img src="../images/nvidia_gpu/H100_format.png" width="60%" alt="H100 产品规格">
 
+NVIDIA A100 vs. H100 规格表如下所示:
+
+<img src="../images/nvidia_gpu/A100_H100.png" width="70%" alt="A100_H100">
+
 ## 六，V100/A100/H100 计算能力对比
 
 下表比较了不同 NVIDIA GPU 架构之间的计算能力参数。
