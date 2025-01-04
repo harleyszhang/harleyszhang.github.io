@@ -155,7 +155,7 @@ $$(-1)^s \times M \times 2^k$$
 <img src="../images/quantization/symmetric_quantization.png" width="60%" alt="对称量化">
 </div>
  
-假设 $x_f$ 表示 FP32 权重 $x_{float}$， $x_q$ 表示量化的 INT8 权重值（整数）$x_{quantized}$，$x_s$ 是缩放因子 $x_{scale}$（映射因子、量化尺度（范围）、FP32 的缩放系数），`round` 为取整函数。。对权权值和数据的量化可以归结为寻找 $scale$ 的过程，量化方法的改进本质上是选择最优 $scale$ 值的过程。
+假设 $x_f$ 表示 FP32 权重 $x_{float}$， $x_q$ 表示量化的 INT8 权重值（整数）$x_{quantized}$，$x_s$ 是缩放因子 $x_{scale}$（映射因子、量化尺度（范围）、FP32 的缩放系数），`round` 为取整函数。对权权值和数据的量化可以归结为寻找 $scale$ 的过程，量化方法的改进本质上是选择最优 $scale$ 值的过程。
 
 $$x_f = x_s \times x_q$$
 
