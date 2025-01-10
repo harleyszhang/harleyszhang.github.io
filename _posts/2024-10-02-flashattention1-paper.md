@@ -110,7 +110,7 @@ $$\text{S = QK}^\text{T} \in \mathbb{R}^{N\times N},\quad \text{P = softmax(S)} 
 <img src="../images/flash_attention/standard_attention_mac.png" width="60%" alt="self-attention 与 HBM 的交互">
 </div>
 
-self-attention 算子涉及到的和 HBM 数据传输过程如上图所示，很明显需要从HBM 中读取 5次，写入 HBM 3 次，`HBM` 访存量 $MAC = 3N^2 + 4Nd$，很明显标准注意力的 HBM 随序列长度增加呈二次方增长。
+self-attention 算子涉及到的和 HBM 数据传输过程如上图所示，很明显需要从HBM 中读取 5次，写入 HBM 3 次，`HBM` 访存量 $MAC = 4N^2 + 4Nd$，很明显标准注意力的 HBM 随序列长度增加呈二次方增长。
 
 ## 3 FlashAttention: 算法、分析和拓展
 
