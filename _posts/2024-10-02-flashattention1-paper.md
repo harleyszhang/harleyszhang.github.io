@@ -440,7 +440,7 @@ FlashAttention 的反向传播做点两点改进：
 1. 不保存从前向传播中大小为 $O(N^2)$ 的 `dropout` 掩码，但可以保存前向传播中的伪随机数生成器状态 $R$，并在反向传播中重新生成 dropout 掩码，这样我们就只需要 $O(N)$ 的额外内存。
 2. 在计算 $\text{softmax}$ 梯度时，我们使用公式 (4) 计算 $D_i = P_i^\top dP_i$，而不在大小为 $N$ 的 $P_i$ 和 $dP_i$ 上进行归约（它们可能无法放入 SRAM）。相反，我们可以将其重写为 $D_i = dO_i^\top O_i$，并计算大小为 $N$ 的向量之间的点积。
 
-完整的 FlashAttention 反向传播算法见算法 4。从概念上讲，它其实是附录 B.2 中推导的分块版本。
+完整的 `FlashAttention` 反向传播算法见算法 4。从概念上讲，它其实是附录 B.2 中推导的分块版本。
 
 <img src="../images/flash_attention/flashattention_bp.png" width="75%" alt="algorigthm4 FlashAttention Backward Pass">
 
