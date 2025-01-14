@@ -146,8 +146,7 @@ $$
 按照作者的观点，激活值越大，对应通道越显著，就应该分配更大的缩放系数降低其量化误差。因此，**作者统计各通道的激活值平均值（计算输入矩阵各列绝对值的平均值）$s_{\mathbf{X}}$，将此作为各通道的缩放系数**。另外，引入一个变量 $\alpha$ 用于平衡显著通道和非显著通道，并通过计算不同 $\alpha$ 下的 $\text{MSE}$ 损失（$\mathcal{L}$），损失最小的就是最佳的 $\alpha$。转换成公式可得求权重缩放系数 $s$ 的表达式如下所示：
 
 $$
-s = \text{mean(abs}({\mathbf{x}}))^{\alpha}, \quad \alpha^* = \arg\min_{\alpha} \mathcal{L}(\text{mean(abs}({\mathbf{x}}))^{\alpha})
-\tag{5}
+s = \text{mean(abs}({\mathbf{x}}))^{\alpha}, \quad \alpha^* = \arg\min_{\alpha} \mathcal{L}(\text{mean(abs}({\mathbf{x}}))^{\alpha}) \tag{5}
 $$
 
 其中 $\text{mean(abs}({\mathbf{x}}))$ 是**逐通道**计算的激活值绝对值的平均值（对应 llm_awq 仓库代码的 `get_act_scale` 函数），$\text{MSE}$ 损失是模型网络层的浮点结果和量化结果的均方误差，计算公式为 $\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (out_{fp16} - out_{quant})^2$。
