@@ -150,7 +150,15 @@ s = \text{mean(abs}({\mathbf{x}}))^{\alpha}, \quad \alpha^* = \arg\min_{\alpha} 
 \tag{5}
 $$
 
-其中 $\text{mean(abs}({\mathbf{x}}))$ 是逐通道计算的激活值绝对值的平均值（对应 llm_awq 仓库代码的 `get_act_scale` 函数），$\text{MSE}$ 损失是模型网络层的浮点结果和量化结果的均方误差，计算公式为 $\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (out_{fp16} - out_{quant})^2$。
+其中 $\text{mean(abs}({\mathbf{x}}))$ 是**逐通道**计算的激活值绝对值的平均值（对应 llm_awq 仓库代码的 `get_act_scale` 函数），$\text{MSE}$ 损失是模型网络层的浮点结果和量化结果的均方误差，计算公式为 $\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (out_{fp16} - out_{quant})^2$。
+
+```python
+@torch.no_grad()
+def get_act_scale(x):
+    # x.abs().view(-1, x.shape[-1]): 重塑张量维度 -> [b*s, h]
+    # x.abs().view(-1, x.shape[-1]).mean(0): 沿着第0维计算平均值 -> [h,]
+    return x.abs().view(-1, x.shape[-1]).mean(0)
+```
 
 另外，在求 $\mathbf{s}$ 中需要注意两点：
 1. $s$ 计算过程中会按照超参数 `group_size` 对通道进行分组，每组共享一个 $\alpha$。
