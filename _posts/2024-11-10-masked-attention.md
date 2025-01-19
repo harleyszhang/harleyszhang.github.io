@@ -64,9 +64,9 @@ self-attention 的矩阵计算形式如下图所示:
 
 第二个问题：Self-Attention 结构怎么理解，Q、K、V的作用是什么？这三个矩阵又怎么计算得到最后的输出？
 
-在计算 Self-Attention 时，Q、K、V 被用来**计算注意力分数**，即用于表示**当前位置和其他位置之间的关系**。注意力分数可以通过 Q 和 K 的点积来计算，然后将分数除以 $\sqrt{ \text{head\_dim}}$，再经过一个 `softmax` 归一化处理，得到每个位置的权重。然后用这些权重来加权计算 V 的加权和，即得到当前位置的输出。
+在计算 Self-Attention 时，Q、K、V 被用来**计算注意力分数**，即用于表示**当前位置和其他位置之间的关系**。注意力分数可以通过 Q 和 K 的点积来计算，然后将分数除以 $\sqrt{\text{head-dim}}$，再经过一个 `softmax` 归一化处理，得到每个位置的权重。然后用这些权重来加权计算 V 的加权和，即得到当前位置的输出。
 
-> 将注意分数分数除以 $\sqrt{ \text{head\_dim}}$ 的操作，对应 self-attention 结构图中的 `Scale` 层。
+> 将注意分数分数除以 $\sqrt{\text{head-dim}}$ 的操作，对应 self-attention 结构图中的 `Scale` 层。
 
 第三个问题：为什么 gpt 这种 decoder-only 架构的模型还需要 mask？
 
@@ -80,7 +80,7 @@ GPT 在训练阶段为了提高训练精度，所以采用了 “masked self-att
 
 ### 2. mask 原理
 
-之所以需要 `masked` 是因为，**对于因果模型来说，只需要关注当前 token 与之前 token 的注意力关系，而无需理会它与后续 token 的关系**，基于此这种模型的 mask 被称为 `Causal Mask`。
+之所以需要 `casual masked` 是因为，**对于因果模型来说，只需要关注当前 token 与之前 tokens 的注意力关系，而无需理会它与后续 tokens 的关系**，基于此这种模型的 mask 被称为 `Causal Mask`。
 
 在 self-attention 中实现 `Causal Mask`，其实就是要确保每个 `token` 只和它前面的词（包括它自己）进行交互，而不与它后面的词进行交互。
 
