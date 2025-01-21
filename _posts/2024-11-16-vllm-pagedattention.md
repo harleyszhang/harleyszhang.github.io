@@ -75,10 +75,8 @@ void paged_attention_v2_launcher()
 void paged_attention_v1(
     torch::Tensor& out,    // [num_seqs, num_heads, head_size]
     torch::Tensor& query,  // [num_seqs, num_heads, head_size]
-    torch::Tensor&
-        key_cache,  // [num_blocks, num_heads, head_size/x, block_size, x]
-    torch::Tensor&
-        value_cache,       // [num_blocks, num_heads, head_size, block_size]
+    torch::Tensor& key_cache,  // [num_blocks, num_heads, head_size/x, block_size, x]
+    torch::Tensor& value_cache,       // [num_blocks, num_heads, head_size, block_size]
     int64_t num_kv_heads,  // [num_heads]
     double scale,
     torch::Tensor& block_tables,  // [num_seqs, max_num_blocks_per_seq]
@@ -811,11 +809,12 @@ class BlockList:
 
 #### 逻辑 block 管理类-SelfAttnBlockSpaceManager
 
-SelfAttnBlockSpaceManager 类用于管理注意力机制中 KV（Key-Value）缓存块，主要负责**逻辑内存块的分配、交换**、以及其他高级功能如前缀缓存、分叉/写时复制（Forking/Copy-on-Write）和滑动窗口内存分配。
+SelfAttnBlockSpaceManager 类用于管理注意力机制中 KV（Key-Value）缓存块，主要负责**逻辑内存块的分配、交换**、以及其他高级功能如前缀缓存（即请求共享前缀`systemp prompt`）、分叉/写时复制（Forking/Copy-on-Write）和滑动窗口内存分配。
 
-和前面几个是 `block` 模块内部类不同，它是对外部模块提供的类，但 BlockManager（和调度器）实际上只负责管理页表（即管理每个seq到物理块的映射关系），实际的物理块中的数据不由它管理。
+和前面几个是 `block` 模块内部类不同，它是对外部模块提供的类，但 BlockManager（和调度器）实际上只负责管理页表（即管理每个 `seq` 到物理块的映射关系），实际的物理块中的数据不由它管理。
 
-先看构造函数 `__init__()`，函数中维护了一个逻辑 `block_tables`，它是一个字典，形式如 `block_tables: Dict[SeqId, BlockTable] = {}`，这个字典维护着整个 vllm 系统中每个 Sequence 实例到它的 block_table 之间的映射关系。构造函数的输入参数比较多，这里重点看三个参数的意义：
+先看构造函数 `__init__()`，函数中维护了一个逻辑 `block_tables`，它是一个字典，形式如 `block_tables: Dict[SeqId, BlockTable] = {}`，这个字典维护着整个 vllm 系统中每个 Sequence 实例到它的 block_table 之间的映射关系，**方便快速查找到当前文本序列(Sequence) 对应的 PhysicalTokenBlock**。构造函数的输入参数比较多，这里重点看三个参数的意义：
+
 - `block_size`: 每个内存块的大小，表示可以存储多少个令牌的 KV 数据。
 - `num_gpu_blocks`: 分配在 GPU 上的内存块数量。
 - `num_cpu_blocks`: 分配在 CPU 上的内存块数量。
@@ -826,7 +825,57 @@ SelfAttnBlockSpaceManager 类用于管理注意力机制中 KV（Key-Value）缓
 <img src="../images/vllm_pagedattention/block_tables.png" width="60%" alt="block_tables">
 </div>
 
-`SelfAttnBlockSpaceManager` 类中内存块分配相关有 `allocate` 和 `_allocate_sequence` 函数，分别用于为为给定的序列组分配所需的内存块和为单个序列分配块表。
+`SelfAttnBlockSpaceManager` 类中内存块分配相关有 `allocate` 和 `_allocate_sequence` 函数，分别用于为给定的序列组分配所需的内存块和为单个序列分配块表。
+
+**块的分配策略由 CpuGpuBlockAllocator 来实现**，分配策略有 `naive` 和 `prefix_caching` 两种。CpuGpuBlockAllocator 是一个管理 CPU 和 GPU 内存块的分配器类，继承自 DeviceAwareBlockAllocator，提供了在 CPU 和 GPU 设备上分配和管理内存块的功能。
+
+块的分配策略类涉及到 4 个类，它们的类图关系如下所示：
+
+```mermaid
+classDiagram
+    DeviceAwareBlockAllocator <-- CpuGpuBlockAllocator
+    BlockAllocator <-- NaiveBlockAllocator
+    class DeviceAwareBlockAllocator {
+        +allocate_mutable_block()
+        +allocate_immutable_block()
+        +free()
+    }
+    class BlockAllocator {
+        +allocate_mutable_block()
+        +allocate_immutable_block()
+        +free()
+    }
+    class CpuGpuBlockAllocator {
+        -_allocators: Dict
+        +create()
+        +swap()
+    }
+    class NaiveBlockAllocator {
+        -_free_blocks: List
+        +allocate_block()
+        +free()
+    }
+```
+
+**类的关系说明**：
+1. DeviceAwareBlockAllocator
+    - 顶层接口
+    - 定义设备相关的内存块分配方法
+    - CpuGpuBlockAllocator 实现此接口
+    - BlockAllocator
+
+2. 基础抽象类
+    - 定义基本的内存块分配操作
+    - NaiveBlockAllocator 继承此类
+
+3. CpuGpuBlockAllocator
+    - 实现 DeviceAwareBlockAllocator 接口
+    - **内部使用 BlockAllocator 的具体实现(如 NaiveBlockAllocator)**
+    - 管理 CPU 和 GPU 两种设备上的内存块
+
+4. NaiveBlockAllocator
+    - BlockAllocator 的简单实现
+    - 被 CpuGpuBlockAllocator 使用来管理具体设备上的内存块
 
 ### 2.2 slot mapping
 
@@ -1023,7 +1072,12 @@ def determine_num_available_blocks(model_config, gpu_memory_utilization = 0.9) -
     return num_gpu_blocks, 0
 ```
 
-至此 `vllm` 的 `pagedattention` 内核设计和动态分配、管理 kv cache 内存的模块分析完毕，难点主要有三个：一个是 `block_tables` 的创建和管理，以及 gpu 设备在指定模型上的可分配的内存 `blocks` 的计算，最后就是 `pagedattention` 内核代码中相关线程索引和偏移的计算怎么改成基于 `block_tables` 的形式，这都需要反复阅读理解代码才能得到清晰的理解。
+总结：至此 `vllm` 的 `pagedattention` 内核设计和动态分配、管理 kv cache 内存的模块分析完毕，难点主要有三个：
+1. `cpu/gpu` 设备在指定模型上的可分配的内存 `blocks` 的计算;
+2. (不同设备的) `block_tables` 的创建和管理，以及基于 `Scheduler` 的调度策略去分配、释放和回收 `blocks`。
+3. 最后就是 `pagedattention` 内核代码中相关线程索引和偏移的计算怎么改成基于 `block_tables` 的形式，多了三个参数：`k_cache, v_cache, block_table`，其中 `block_tables` 尺寸为 [num_seqs, max_num_blocks_per_seq]，`v_cache` 尺寸为 [num_blocks, num_heads, head_size, block_size]。
+
+以上，这都需要反复阅读理解代码才能得到清晰的理解。
 
 ## 参考资料
 
