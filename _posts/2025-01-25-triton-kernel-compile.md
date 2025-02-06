@@ -1,8 +1,8 @@
 ---
 layout: post
-title: triton 内核编译流程解析.md
+title: triton 内核编译流程解析
 date: 2025-01-25 20:00:00
-summary: Triton 内核编译函数入口代码分析，并全面总结内核的编译流程
+summary: Triton 内核编译函数入口代码分析，并全面总结内核的编译流程。
 categories: Hpc
 ---
 
