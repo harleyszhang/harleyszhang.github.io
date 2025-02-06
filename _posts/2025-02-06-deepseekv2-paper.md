@@ -339,9 +339,11 @@ $$ v_t = W^{UV} c_t^{KV} \in \mathbb{R}^{B \times L \times H \times 128} $$
 
 Self-Attention 的计算过程和传统的 `MHA` 一模一样。同样也是首先计算 `attention score`：
 
+{% raw %}
 $$a = \mathrm{softmax}\left(\frac{q_t^\top k_t + \mathrm{Mask}}{\sqrt{192}}\right) = 
-\mathrm{softmax}\left(\frac{{q_t^C}^\top k_t^C + {q_t^R}^\top k_t^R + \mathrm{Mask}}{\sqrt{128 + 64}} \right)
+\mathrm{softmax}\left(\frac{{q_t^C}^\top k_t^C + {q_t^R}^\top k_t^R + \mathrm{Mask}} {\sqrt{128 + 64}} \right)
 \in \mathbb{R}^{B \times L \times H \times L} $$
+{% endraw %}
 
 计算对 $V$的加权和，并将所有 heads 压平（即 heads * head_dim），得到 Attention 输出：
 
