@@ -24,6 +24,8 @@ categories: Transformer
     - [3.1.3 Self-Attention 计算](#313-self-attention-计算)
   - [3.2 transformers 代码实现解读](#32-transformers-代码实现解读)
   - [3.3 MLA 模块的代码优化-Projection Absorption](#33-mla-模块的代码优化-projection-absorption)
+    - [CC (CacheCompressed）](#cc-cachecompressed)
+    - [A\_CC（AbsorbCacheCompressed）](#a_ccabsorbcachecompressed)
 - [参考资料](#参考资料)
 
 ## 1. 介绍
@@ -183,7 +185,11 @@ $$
 \tag{19}
 $$
 
-其中，$W^{QR} \in \mathbb{R}^{d^R_h n_h \times d'_c}$ 和 $W^{KR} \in \mathbb{R}^{d^R_h \times d}$ 分别是用于生成**解耦查询（decoupled queries）和解耦键（decoupled key）的矩阵**。$\text{RoPE}(\cdot)$ 表示应用 RoPE 矩阵的操作，$\cdot ; \cdot$ 表示拼接（concatenation）操作。
+其中:
+- $W^{QR} \in \mathbb{R}^{d^R_h n_h \times d'_c}$ 表示生成**解耦查询（decoupled queries）矩阵**
+- $W^{KR} \in \mathbb{R}^{d^R_h \times d}$ 表示**解耦键（decoupled key）的矩阵**。
+- $\text{RoPE}(\cdot)$ 表示应用 RoPE 矩阵的操作;
+- $\cdot ; \cdot$ 表示拼接（concatenation）操作。
 
 在推理过程中，解耦后的键（decoupled key）也需要缓存。因此，DeepSeek-V2 的 KV 缓存总大小为 $(d_c + d^R_h)l$ 个元素。
 
@@ -306,7 +312,7 @@ $$q_t^C = W^{UQ} c_t^Q \in \mathbb{R}^{B \times L \times H \times 128}$$
 
 再将其投影到 $\mathbb{R}^{H \times 64}$（对应模型配置文件中的 `qk_rope_head_dim` 参数）上，并使用 RoPE 嵌入位置信息，得到 Q 向量的第二部分；
 
-$$q_t^R = \mathrm{RoPE}(W^{KR} h_t) \in \mathbb{R}^{B \times L \times H \times 64}$$
+$$q_t^R = \mathrm{RoPE}(W^{QR} h_t) \in \mathbb{R}^{B \times L \times H \times 64}$$
 
 最后，将这两部分进行 `concat` 拼接得到最终的 $Q$ 向量：
 
@@ -314,13 +320,17 @@ $$ q_t = [q_t^C, q_t^R] \in \mathbb{R}^{B \times L \times H \times 192}$$
 
 #### 3.1.2 KV 向量计算
 
-计算 KV 向量时，首先，将输入向量投影到一个 512 维的低维空间。
+计算 KV 向量时，首先，将输入向量投影到一个 512（**对应模型配置文件中的 `kv_lora_rank` 参数**）维的低维空间。
 
-然后，和 Q 向量的计算过程类似，再将其投影到 $\mathbb{R}^{H \times 128}$ 的多头向量空间上（其中 $H=128$ 是 `heads` 数），得到了 $K$ 向量的第一部分。
+$$c_t^KV = W^{DKV} h_t \in \mathbb{R}^{B \times L \times 512}$$
 
-$K$ 的第二部分同样也是将输入向量投影到 64 维向量空间并施加 RoPE 嵌入位置信息。
+然后，和 Q 向量的计算过程类似，再将其投影到 $\mathbb{R}^{H \times 128}$ 的多头向量空间上（其中 $H=128$ 是 `heads` 数，$128$ 对应模型配置文件中的 `qk_rope_head_dim` 参数，得到了 $K$ 向量的第一部分。
 
-最后，和 Q 不同的是，完整的 K 是将 K 的第二部分广播到每个 head 后与第一部分拼接得到：
+$K$ 的第二部分同样也是将输入向量投影到 $64$（对应模型配置文件中的 `qk_rope_head_dim` 参数）维向量空间并施加 RoPE 嵌入位置信息。
+
+$$k_t^R = \mathrm{RoPE}(W^{KR} h_t) \in \mathbb{R}^{B \times L \times 64}$$
+
+最后，和 Q 不同的是，完整的 K 是将 K 的第二部分**广播到每个 head 后与第一部分拼接得到**：
 
 $$k_t = \begin{bmatrix}
     k_{t,1}^C & k_t^R \\ 
@@ -339,11 +349,9 @@ $$ v_t = W^{UV} c_t^{KV} \in \mathbb{R}^{B \times L \times H \times 128} $$
 
 Self-Attention 的计算过程和传统的 `MHA` 一模一样。同样也是首先计算 `attention score`：
 
-{% raw %}
 $$a = \mathrm{softmax}\left(\frac{q_t^\top k_t + \mathrm{Mask}}{\sqrt{192}}\right) = 
-\mathrm{softmax}\left(\frac{{q_t^C}^\top k_t^C + {q_t^R}^\top k_t^R + \mathrm{Mask}} {\sqrt{128 + 64}} \right)
+\mathrm{softmax}\left(\frac{{q_t^C}^\top k_t^C + {q_t^R}^\top k_t^R + \mathrm{Mask}}{\sqrt{128 + 64}} \right)
 \in \mathbb{R}^{B \times L \times H \times L} $$
-{% endraw %}
 
 计算对 $V$的加权和，并将所有 heads 压平（即 heads * head_dim），得到 Attention 输出：
 
@@ -392,6 +400,7 @@ class DeepseekV2Attention(nn.Module):
         # Query 投影层（LoRA 分解为 q_a_proj 和 q_b_proj）
         self.q_a_proj = nn.Linear(self.hidden_size, self.q_lora_rank, bias=config.attention_bias)
         self.q_a_layernorm = DeepseekV2RMSNorm(self.q_lora_rank)  # LoRA 后的归一化
+        # q_b_proj 是 q 计算中的升维矩阵，它包含了两部分 W_{UQ} 和 W_{QR}，分别表示对 q 的 nope/rope 部分的计算。
         self.q_b_proj = nn.Linear(self.q_lora_rank, self.num_heads * self.q_head_dim, bias=False)
 
         # Key-Value 投影层（LoRA 分解为 kv_a_proj_with_mqa 和 kv_b_proj）
@@ -401,6 +410,7 @@ class DeepseekV2Attention(nn.Module):
             bias=config.attention_bias,
         )
         self.kv_a_layernorm = DeepseekV2RMSNorm(self.kv_lora_rank)
+        # kv_b_proj：它包含了两部分 W_{UK} 和 W_{UV}，分别表示对 k_nope 和 v 部分的计算。
         self.kv_b_proj = nn.Linear(
             self.kv_lora_rank,
             self.num_heads * (self.qk_nope_head_dim + self.v_head_dim),  # 合并 Key 和 Value
@@ -489,7 +499,11 @@ class DeepseekV2Attention(nn.Module):
 
 ### 3.3 MLA 模块的代码优化-Projection Absorption
 
+#### CC (CacheCompressed）
+
 在 transformers 的最新开源版本中， MLA 算子改为缓存**压缩后的 KV Cache**，并将 RoPE 后的 `k_pe` 一并缓存入 KV Cache 中，与缓存完整的 KV Cache 相比，这将大大减少每个 token 的每层Cache 大小。
+
+#### A_CC（AbsorbCacheCompressed）
 
 上述 `CacheCompressed` 的实现代码其实并不能实质减少 KV Cache 过大的问题，因为在计算 MLA 的时候，仍然需要存储解压后的完整的 `KV Cache`（中间激活），这很可能引起 OOM 崩溃。
 
@@ -500,6 +514,8 @@ DeepSeek-V2 论文中提出，可以将 KV 的解压缩矩阵吸收到Q-projecti
 $${q_t^C}^\top k_t^C = (W^{UQ} c_t^Q)^{\top} W^{UK} c_t^{KV} = {c_t^Q}^{\top}{W^{UQ}}^{\top} W^{UK} c_t^{KV} = ({c_t^Q}^{\top}{W^{UQ}}^{\top} W^{UK}) c_t^{KV}$$
 
 即通过矩阵乘法结合律，可以改为计算 $({c_t^Q}^{\top}{W^{UQ}}^{\top} W^{UK})$，避免了解压缩出完整的 $K$ 矩阵。另外，在原始版本的解压缩的过程中，由于每个 token 的 key 都需要与 $W^{UK}$ 相乘才能得到，因此计算量较大；矩阵吸收后，$W^{UK}$ 只需要对 $q_t^C$ 这一个向量相乘，也大大减少了浮点计算量。
+
+总结：`A_CC` 相比于 CC，把原来属于单 kv 的计算量转移到 q 上了，而 q 的 seq_len=1，可减少计算量。
 
 其中，$c_t^{KV}$ 是我们实际保存的 KV cache。
 
