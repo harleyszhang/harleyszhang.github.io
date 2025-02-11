@@ -6,6 +6,15 @@ summary: DeepseekMOE 计算流程，结构拆解及代码实现。
 categories: Transformer
 ---
 
+- [1. 基础 MOE 结构介绍](#1-基础-moe-结构介绍)
+- [2. DeepseekMOE 结构介绍](#2-deepseekmoe-结构介绍)
+  - [2.1 Gate 网络与 DeepseekMOE 计算流程](#21-gate-网络与-deepseekmoe-计算流程)
+- [3. DeepseekMOE 结构代码实现](#3-deepseekmoe-结构代码实现)
+  - [3.1 DeepseekV2MLP 实现](#31-deepseekv2mlp-实现)
+  - [3.2 门控/路由网络实现](#32-门控路由网络实现)
+  - [3.3 DeepseekMOE 实现](#33-deepseekmoe-实现)
+- [参考资料](#参考资料)
+
 ## 1. 基础 MOE 结构介绍
 
 `Mixtral` 8x7B (announcement, model card) 是高质量的混合专家模型 (Mixed Expert Models，简称 MoEs) 的 Transformer 模型，或者说是一种稀疏的 mixture-of-experts 模型，采用纯解码器结构，并使用 `MOE` 结构，替换原始的 `FFN` 结构。在每一层，对每个 `token`，存在一个 `router network` 会挑选两组 “experts”(即参数量更小的 FFN）来分别处理该 token，并通过**加法方式**融合两组 “experts” 的输出。
