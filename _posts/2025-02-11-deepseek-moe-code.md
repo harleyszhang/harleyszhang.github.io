@@ -76,21 +76,9 @@ DeepseekV2 模型的 MOE 参数如下：
 
 混合专家（MoE）参数说明：
 
-| 参数                  | 说明                                                              |
-| --------------------- | ----------------------------------------------------------------- |
-| n_routed_experts      | 参与路由的专家总数，此处为 160。                                  |
-| n_shared_experts      | 共享专家数量，此处为 2。                                          |
-| **num_experts_per_tok**   | **每个 Token 选择的专家数量，此处为 6**。                             |
-| moe_intermediate_size | MoE 专家中间层维度大小，此处为 1536。                             |
-| moe_layer_freq        | MoE 层的频率，此处为 1（每层都是 MoE 层）。                       |
-| n_group               | 专家分组数量，此处为 8。                                          |
-| topk_group            | 每组选择的专家数量，此处为 3。                                    |
-| topk_method           | Top-K 选择算法，此处为 group_limited_greedy（分组限制贪婪选择）。 |
-| scoring_func          | 门控分数计算方式，此处为 softmax。                                |
-| routed_scaling_factor | 路由权重缩放因子，此处为 16.0。                                   |
-| norm_topk_prob        | 是否对 Top-K 权重归一化，此处为 false。                           |
-| seq_aux               | 是否使用序列级辅助损失，此处为 true。                             |
-| aux_loss_alpha        | 辅助损失权重，此处为 0.001。                                      |
+<div align="center">
+<img src="../images/moe/moe_params.png" width="60%" alt="moe_params">
+</div>
 
 ## 3. DeepseekMOE 结构代码实现
 
@@ -249,6 +237,19 @@ topk_weight shape torch.Size([2048, 6])
 
 ### 3.3 DeepseekMOE 实现
 
+1. **门控计算**
+   - 调用门控网络（self.gate），对输入 hidden_states 计算得到 top‑k 专家索引（topk_idx）、对应权重（topk_weight）以及辅助损失（aux_loss，推理时不参与梯度计算）。
+2. **数据重排**
+    - 将输入 hidden_states 展平为二维张量（形状 $[B \times T, d]$），并将 topk_idx 也展平。
+	- 在推理模式下，通常不需要像训练时那样对每个 token 进行 repeat_interleave，因为每个 token 只会由对应专家处理一次。
+3. **专家计算**
+	- 根据展平后的 `topk_idx`，依次对每个专家负责的 token 子集进行计算。
+	- 由于这里可能存在多个 token 被分配给不同专家，实际实现中需要将每个专家的输出按顺序记录下来。
+4. **输出重构与加权融合**
+	- 将所有专家计算的输出进行合并。通过将输出重新整理（排序）回原始 token 顺序，并按照 topk_weight 对各个专家输出进行加权求和，从而获得最终输出。
+	- 整个过程保证最终输出形状与原始输入保持一致，即 $[B, T, d]$。
+
+代码实现如下所示：
 
 ```python
 # 为了单元测试，模拟不使用分布式（ep_size默认为1）
