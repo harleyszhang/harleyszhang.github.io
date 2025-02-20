@@ -175,7 +175,8 @@ categories: LLM_Infer
 ## 六、总结-lightllm 推理框架性能瓶颈分析实验结论
 
 - **PD 分离方案可考虑：`prefill` 阶段倾向于算力高的机器（PCIE 卡），`decode` 阶段倾向于高带宽（低算力）的机器**，从而降低 LLM 推理服务的成本。
-- 对比 PCIE 通信，`NVLink` 通信在 `prefill` 阶段是能明显提升 `all_reduce` 操作性能。但是在 `decode` 阶段 `all_reduce` 操作时间几乎不变。**
+- 直接实验例子：4 卡 A100 的 prefill 阶段性能 2 倍于 A40，但是在 decode 阶段性能提升只有 15%(总的 decode 时间)，prefill 阶段倾向于算力高的机器（PCIE 卡），decode 阶段倾向于高带宽（低算力）的机器，从而降低 LLM 推理服务的成本。
+- 对比 PCIE 通信，`NVLink` 通信在 `prefill` 阶段是能明显提升 `all_reduce` 操作性能。但是在 `decode` 阶段 `all_reduce` 操作时间几乎不变。
 - 带 `PCIe` 互联的卡（如 T4 卡和 8 张 A40 卡），**prefill 阶段的 all_reduce 时间占比是最大的**。
 - `decode` 阶段，因为 `sequence = 1` ，所以算子的算术（计算）强度比较低，即性能受内存带宽限制而不是算力限制（GPU 算力无法被充分利用），所以增加 `TP` 数给算子带来的性能提升并不明显。
 
