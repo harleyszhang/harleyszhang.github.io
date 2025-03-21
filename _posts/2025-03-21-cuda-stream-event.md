@@ -114,18 +114,16 @@ Stream 管理的 API 在 cuda runtime api 文档的这个[链接](https://docs.n
 
 stream 类型为 `cudaStream_t`:
 
-```cpp
-cudaStream_t stream
-```
-
 `Stream` 模块（类）常用的函数包括：
 
 - `cudaStreamCreate()`：创建一个 stream。
+- `cudaStreamCreateWithPriority()`: 创建一个具有指定优先级的异步流。
 - `cudaStreamDestroy`：**销毁并清理异步 stream**。
 - `cudaStreamGetDevice()`: 查询 stream 的设备。
 - `cudaStreamQuery()`：**查询异步 stream 的状态**。
 - `cudaStreamSynchronize()`: 等待 stream 中的任务全部完成。
 - `cudaStreamWaitEvent()`: 等待事件并使计算 stream 暂停。
+- `cudaStreamBeginCapture()`: 在流中开始图捕获。
 
 1，创建异步 stream 的接口
 
