@@ -149,9 +149,9 @@ __host__​cudaError_t cudaStreamSynchronize ( cudaStream_t stream)
 
 ```cpp
 __host__​cudaError_t cudaStreamGetAttribute ( cudaStream_t hStream, cudaStreamAttrID attr, cudaStreamAttrValue* value_out )
+__host__​cudaError_t cudaStreamGetDevice ( cudaStream_t hStream, int* device )
+__host__​cudaError_t cudaStreamGetPriority ( cudaStream_t hStream, int* priority )
 __host__​cudaError_t cudaStreamGetCaptureInfo ( cudaStream_t stream, cudaStreamCaptureStatus ** captureStatus_out, unsigned long long* id_out = 0, cudaGraph_t* graph_out = 0, const cudaGraphNode_t** dependencies_out = 0, size_t* numDependencies_out = 0 )
-_host__​cudaError_t cudaStreamGetDevice ( cudaStream_t hStream, int* device)
-__host__​cudaError_t cudaStreamGetPriority ( cudaStream_t hStream, int* priority)
 ```
 
 `cudaStreamGetDevice` 接口的参数:
