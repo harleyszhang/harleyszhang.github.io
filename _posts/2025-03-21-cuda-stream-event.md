@@ -60,7 +60,7 @@ runtime API 通过提供隐式初始化、上下文管理和模块管理来简�
 
 从时间维度分析 cpu、gpu（stream）任务的执行顺序，是会有两条并行的程序运行线，如下图所示:
 
-![cpu_cuda_stream](../../images/streams/cpu_cuda_stream.png)
+![cpu_cuda_stream](../images/cuda_stream_event/cpu_cuda_stream.png)
 
 上图 cpu/gpu 任务执行的顺序分析：
 1. CPU launch kernel 1，kernel 1 入默认 Stream，此时 Stream 里面只有 kernel1，于是 kernel 1 马上在 GPU执行；
@@ -74,7 +74,7 @@ runtime API 通过提供隐式初始化、上下文管理和模块管理来简�
 
 下图展示了，使用 4 个 `streams` 和异步方式执行数据传输和计算的并行效果和串行执行的效果对比。
 
-![cuda-4streams](../../images/streams/cuda-4streams.png)
+![cuda-4streams](../images/cuda_stream_event/cuda-4streams.png)
 
 在 Concurrent streams Model 中，我们可以将从 host 到 device 的内存拷贝、 kernel 的执行以及从 device 到 host 的内存拷贝都设为**异步操作**，同时将内存划分为 $N$ trunks（块）。
 
