@@ -130,6 +130,7 @@ stream 类型为 `cudaStream_t`:
 - cudaStreamCreate
 - cudaStreamCreateWithFlags
 - cudaStreamCreateWithPriority: 创建具有指定优先级的异步 stream。
+
 ```cpp
 __host__​cudaError_t cudaStreamCreate ( cudaStream_t* pStream)
 __host__​__device__​cudaError_t cudaStreamCreateWithFlags ( cudaStream_t* pStream, unsigned int  flags )
