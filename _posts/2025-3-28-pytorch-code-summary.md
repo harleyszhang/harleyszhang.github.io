@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Pytorch 架构概览
+title: Pytorch 框架架构目录概览
 date: 2025-03-28 19:00:00
 summary: pytorch 架构介绍和主目录作用、和模块之间关系分析。
 categories: Framework_analysis
