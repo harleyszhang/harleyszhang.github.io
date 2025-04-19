@@ -6,6 +6,12 @@ summary: pytorch 架构介绍和主目录作用、和模块之间关系分析。
 categories: Framework_analysis
 ---
 
+- [1. pytorch 框架概述](#1-pytorch-框架概述)
+- [2. pytorch 源码目录](#2-pytorch-源码目录)
+  - [c10 核心基础库](#c10-核心基础库)
+- [3. 在 macOS 上的编译安装](#3-在-macos-上的编译安装)
+- [参考资料](#参考资料)
+
 ## 1. pytorch 框架概述
 
 `PyTorch` 框架本质上是一个支持自动微分的张量库，张量是 PyTorch 中的核心数据结构。
@@ -76,7 +82,7 @@ c10 作为 PyTorch 框架的**核心基础库**，其包含多个子模块：
 - `c10/mobile/`：移动端支持代码，为在移动/嵌入式场景下裁剪和优化 PyTorch 而设。
 - `c10/test/`：c10 本身的一些单元测试代码。
 
-## 在 macOS 上的编译安装
+## 3. 在 macOS 上的编译安装
 
 前置安装条件：
 
