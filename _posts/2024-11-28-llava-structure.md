@@ -7,6 +7,10 @@ categories: Transformer
 ---
 
 - [一 背景知识](#一-背景知识)
+  - [1.1 ViT 模型结构](#11-vit-模型结构)
+    - [ViT block 组成](#vit-block-组成)
+    - [输入切分为多个 path](#输入切分为多个-path)
+  - [1.2 常见的多模态模型](#12-常见的多模态模型)
 - [二 LLaVA 系列模型](#二-llava-系列模型)
   - [2.1 LLaVA1](#21-llava1)
     - [2.1.1 ViT-L/14 模型结构](#211-vit-l14-模型结构)
@@ -24,6 +28,34 @@ categories: Transformer
 - [参考资料](#参考资料)
 
 ## 一 背景知识
+
+### 1.1 ViT 模型结构
+
+<div align="center">
+<img src="../images/vit/vit-model-overview.png" width="60%" alt="ViT 模型结构概览">
+</div>
+
+模型概述：作者将输入的图像划分为固定大小的图像块，对**每个图像块**都进行线性嵌入，添加位置嵌入，并将生成的向量序列输入到标准的 Transformer 编码器中。为了进行分类，参考前人经验，使用标准方法，即**在序列中添加一个额外的可学习“分类令牌”**。
+
+#### ViT block 组成
+
+一个 `ViT block` 由以下 5 部分组成：
+
+1. `Patch Embeddings`: 将输入图像划分为固定大小的补丁（patch），每个 patch 被展平为一个向量，并通过一个线性投影层（相当于将 patch 转换为 token embedding），嵌入的维度通常设为 768。
+2. `Position Embeddings`: 添加位置编码（positional embedding），因为 Transformer 本身不具有处理图像空间信息的能力，位置编码能帮助模型了解每个 patch 在图像中的位置。
+3. `Transformer Encoder`: 与 NLP 中的 Transformer 类似，包括多个堆叠的 Transformer blocks。每个 block 包含以下两部分：
+   - Multi-Head Self Attention (MHSA): 允许每个 patch 关注其他 patch 的信息。
+   - Feed-Forward Network (FFN): 一个两层的全连接网络，其中使用新的激活函数（`GELU`）。
+4. `Classification Head`: 将 Transformer Encoder 的输出（通常是第一个 token）传入全连接层（MLP Head）以生成最终的分类输出。
+5. `Layer Normalization and Skip Connections`: 在每个子层之后使用层归一化（Layer Normalization）和残差连接（skip connections）。
+
+#### 输入切分为多个 path
+
+ViT 将输入图片分为多个 patch（`16x16`），再将每个 patch 投影为固定长度的向量送入 Transformer，后续encoder 的操作和原始 Transformer 中完全相同。另外，对于图片分类问题，在输入序列中加入一个特殊的 token，该 token 对应的输出即为最后的预测类别。
+
+举个例子来理解 patch embedding 过程: 假设输入图片大小为 $224 \times224$，path 大小为 $16\times 16$，则每张图片都会生成 $(224\times224)/(16\times16) = 196$ 个 patch，类似于 transformer 模型的输入序列长度为 196。每个 patch 维度大小 = $16\times 16\times 3 = 768$，类似于每个 `token` 映射成的向量长度为 768，输入序列会加上一个特俗字符 `cls`，因此最终的输入序列维度 = $197\times 768$（一共有 197 个token）。线性投射层的维度为 $768\times N (N=768)$，因此输入通过**线性投影层**之后的维度依然为 $197\times 768$。到此，我们详细的解析了通过 `patch embedding` 将一个视觉分类问题转换为 `seq2seq` 的问题。
+
+### 1.2 常见的多模态模型
 
 VILA 是 NVIDIA 和 MIT 的研究人员推出的**视觉语言模型**(`VLM`, 也叫多模态模型)，模型架构如下图图左所示：
 
@@ -205,11 +237,11 @@ LlavaForConditionalGeneration(
 )
 ```
 
-从上述模型结构信息也能明显看出 LlaVA 模型结构主要包括 3 个模块: 
+从上述模型结构信息也能明显看出 LlaVA **模型结构**主要包括 3 个模块: 
 
-1. vision_tower 视觉模块：`CLIPVisionModel`；
-2. multi_modal_projector 映射层: `LlavaMultiModalProjector`（实际是两个直连的线性层）。
-3. language_model 大语言模型: `LlamaForCausalLM`。
+1. `vision_tower` 视觉模块：`CLIPVisionModel`；
+2. `multi_modal_projector` 映射层: `LlavaMultiModalProjector`（实际是两个直连的线性层）。
+3. `language_model` 大语言模型: `LlamaForCausalLM`。
 
 占据 `LLaVa1.5` 模型主要参数量和计算量的是 `LlamaForCausalLM`, 视觉模块和特征映射模块只有几百 `MB` 的参数量。
 
@@ -289,7 +321,7 @@ def vision_encode(self, image_tensor):
     x = x.hidden_states[self.select_layer]
     x = self._select_image_features(x, self.select_feature)
 
-    # 2. 通过多模态投影器将图像特征转换为多模态嵌入
+    # 2. 通过多模态投影器将图像特征转换为多模态(llm) embedding 维度
     image_features = self.multi_modal_projector(x)
 
     assert not torch.isnan(image_features).any(), f"After vision_tower image_features tensor contains NaN values!"
@@ -332,10 +364,10 @@ def get_multi_modal_input_embeddings(
 > 基于自回归生成的特性，`prefill` 阶段: 会输入完整提示词，后续生成 `decode` 阶段时每次只输入一个 `token`。
 
 `forward` 函数的参数作用解释如下:
-- input_ids: 输入的 prompts token 序列。
-- position_ids: prompts 对应的位置编码。
-- atten_info: token_attention 优化定义的相关信息结构体（包含 kv_buffer b_start_loc、b_req_tokens_table、b_req_idx 等信息）。
-- image_tensor: 输入图像经过预处理后的张量，维度通常为 [B, 3, H, W]。
+- `input_ids`: 输入的 prompts token 序列。
+- `position_ids`: prompts 对应的位置编码。
+- `atten_info`: token_attention 优化定义的相关信息结构体（包含 kv_buffer b_start_loc、b_req_tokens_table、b_req_idx 等信息）。
+- `image_tensor`: 输入图像经过预处理后的张量，维度通常为 [B, 3, H, W]。
 
 `forward` 函数是 `LLaVA` 模型的推理流程实现，主要分为以下几个步骤：
 
@@ -388,7 +420,7 @@ def merge_input_ids_with_image_features(
 
 先看下函数参数的意义和作用：
 - `input_ids`: 输入的 `token IDs`, 形状为 (batch_size, sequence_length)。
-- `input_ids`: 输入的 `token IDs`, 形状为 (batch_size, sequence_length)。
+
 - `inputs_embeds`: 文本嵌入，形状为 (batch_size, sequence_length, embed_dim)。
 - `image_features (torch.Tensor)`: 视觉编码后的图像特征，形状为 (num_images, num_image_patches, embed_dim)。
 - `pad_token_id` (int): 填充 token 的 ID，因为 `batch` 输入的请求长短不一。
