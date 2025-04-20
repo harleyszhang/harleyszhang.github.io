@@ -365,7 +365,7 @@ def get_multi_modal_input_embeddings(
 
 `forward` 函数的参数作用解释如下:
 - `input_ids`: 输入的 prompts token 序列。
-- `position_ids`: prompts 对应的位置编码。
+- `position_ids`: prompts 对应的位置编码。【这个参数可省略，get_multi_modal_input_embeddings 参数也会生成该参数】
 - `atten_info`: token_attention 优化定义的相关信息结构体（包含 kv_buffer b_start_loc、b_req_tokens_table、b_req_idx 等信息）。
 - `image_tensor`: 输入图像经过预处理后的张量，维度通常为 [B, 3, H, W]。
 
@@ -434,7 +434,7 @@ def merge_input_ids_with_image_features(
 	- 创建图像标记掩码，找出所有特殊图像 token 的位置
 3. **计算新序列总长度 max_embed_dim**：
 	- 对于每个图像 token，需要将其扩展为 576 个位置（对应 576 个图像 patch）
-	- 总序列长度 = 原始文本长度 + (图像 patch 数量-1) × 图像 token 数量
+	- 总序列长度 = **原始文本长度 + (图像 patch 数量-1) × 图像 token 数量**
 	- 例如：22 + (576-1) × 1 = 597
 4. **计算每个原始 token 在新序列中的位置 `new_token_positions`**：
 	- 使用累积和 `torch.cumsum` 计算每个原始 token 在新序列中的位置 new_token_positions
