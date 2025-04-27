@@ -48,7 +48,7 @@ categories: Linux
 - 使用 `env` 查看**当前系统定义的所有环境变量**；
 - 使用 `set` 查看所有本地定义的环境变量。查看 `PATH` 环境的实例如下：
 
-![PATH环境](../images/linux_basic/PATH环境.png)
+![PATH环境](../images/linux_basic/PATH_Variable.png)
 
 **使用 `unset` 删除指定的环境变量**，`set` 也可以设置某个环境变量的值。清除环境变量的值用 unset 命令。如果未指定值，则该变量值将被设为 NULL。示例如下：
 
