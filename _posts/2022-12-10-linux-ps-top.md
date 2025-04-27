@@ -97,8 +97,6 @@ top -p 2438 -H
 
 `htop` 可以查看单个进程的线程，然后按 `<F2>` 来进入 `htop` 的设置菜单。选择“设置”栏下面的“显示选项”，然后开启“树状视图”和“显示自定义线程名”选项。按 `<F10>` 退出设置。
 
-![image](../images/linux_basic/f1d7359b-92b4-4074-84d4-0a381aaf4d1b.png)
-
 ![image](../images/linux_basic/htop2.png)
 
 ### 参考资料

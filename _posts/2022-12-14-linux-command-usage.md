@@ -206,7 +206,7 @@ ls: /bin/ls /usr/share/man/man1/ls.1.gz
 ### 2.6 常见命令图解
 这个思维导图记录了常见命令，有利于索引，来源[Linux基础命令（01）【Linux基础命令、ip查看、目录结构、网络映射配置】](https://blog.csdn.net/zkk1973/article/details/80606832)
 
-![image](../images/linux_basic/0.3605952030126039.png)
+![image](../images/linux_basic/command_indexs.png)
 
 ## 三 开发常用命令总结
 
@@ -342,7 +342,16 @@ dpkg -l | grep gcc | awk '{print $2}'
 # 查看系统当前使用 gcc 版本
 gcc -v
 ```
-![image](../images/linux_basic/f53e407f-3f8b-4e93-b0de-f84a6f4c9882.png)
+
+macos 系统查看 gcc 版本
+
+```bash
+(base) honggao@U-9TK992W3-1917 ~ % gcc -v
+Apple clang version 17.0.0 (clang-1700.0.13.3)
+Target: arm64-apple-darwin24.3.0
+Thread model: posix
+InstalledDir: /Library/Developer/CommandLineTools/usr/bin
+```
 
 ### 3.18 查看系统版本命令
 
