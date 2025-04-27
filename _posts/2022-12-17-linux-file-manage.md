@@ -128,7 +128,7 @@ du -h -d 0 . # 查看当前目录空间大小
 du -sh foldername # 查看指定目录空间大小
 ```
 
-![image](../images/linux_basic/c62f2296-e82d-4d3c-bb6f-07c1d581fe6b.png)
+![image](../images/linux_basic/df_hT.png)
 
 ## 四 总结
 

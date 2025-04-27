@@ -73,7 +73,7 @@ $ which ls  # 查看 ping 程序(命令)的 binary 文件所在路径
 $ cd /bin;ls 
 ```
 
-![image](./images/feaa2c13-1cdf-46e1-948c-535f4c51a9bd.png)
+![image](./images/ls_bin.png)
 
 查看程序的搜索路径：
 

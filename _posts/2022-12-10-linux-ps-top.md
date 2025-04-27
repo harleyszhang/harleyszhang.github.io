@@ -20,7 +20,7 @@ categories: Linux
 ```
 运行结果如下：
 
-![image](../images/linux_basic/fe9c61ae-8f3a-4e13-9285-1a7c84927fa1.png)
+![image](../images/linux_basic/ps_eo.png)
 
 上面命令语句的各部分参数解释：
 
@@ -56,7 +56,7 @@ top                    # 实时显示进程状态
 ```
 `Linux` 系统下执行 `top` 命令得到以下结果（第一列为进程的 `PID`，第二列为进程所属用户）：
 
-![image](../images/linux_basic/60434a88-d703-43b8-88c5-ea61dfc4f793.png)
+![image](../images/linux_basic/top_info2.png)
 
 **上图各个参数的意义：**
 
@@ -80,7 +80,7 @@ top -p 2438
 ```
 结果如下：
 
-![image](../images/linux_basic/74dede33-9491-4a06-8bee-aa789daed0df.png)
+![image](../images/linux_basic/top_info3.png)
 
 还可以通过 `top` 命令定位问题进程中每个`线程`占用 `cpu` 情况，如查看进程 `PID` 2438 的**每一个线程**占用 cpu 的情况，使用如下命令：
 
@@ -89,7 +89,7 @@ top -p 2438 -H
 ```
 结果如下（单线程，所以只显示一行）：
 
-![image](../images/linux_basic/0f1d4c73-962e-4f86-ac84-83d629539f00.png)
+![image](../images/linux_basic/top4.png)
 
 ### 3. htop 系统监控与进程管理软件
 
@@ -99,7 +99,7 @@ top -p 2438 -H
 
 ![image](../images/linux_basic/f1d7359b-92b4-4074-84d4-0a381aaf4d1b.png)
 
-![image](../images/linux_basic/22ce3092-92be-4333-ac84-38f7ab7f2730.png)
+![image](../images/linux_basic/htop2.png)
 
 ### 参考资料
 [线上linux系统故障排查之一：CPU使用率过高](https://www.jianshu.com/p/6d573e42310a)

@@ -50,7 +50,7 @@ cut -d: -f1 /etc/passwd   # 查看系统所有用户
 cut -d: -f1 /etc/group    # 查看系统所有组
 crontab -l             # 查看当前用户的计划任务
 ```
-![image](../images/linux_basic/b3e99fdb-ebac-467e-861f-5c034fc7881c.png)
+![image](../images/linux_basic/hostname.png)
 
 更多命令及理解，参考此[链接](https://blog.csdn.net/bluishglc/article/details/41390589)。
 

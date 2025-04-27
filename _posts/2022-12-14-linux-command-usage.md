@@ -243,7 +243,7 @@ du -h --max-depth=1 floder_name # 查看当前目录下所有文件/文件夹的
 du -h -d 0 . # 查看当前目录空间大小
 du -sh foldername # 查看指定目录空间大小
 ```
-![image](../images/linux_basic/c62f2296-e82d-4d3c-bb6f-07c1d581fe6b.png)
+![image](../images/linux_basic/df_hT.png)
 
 ### 3.5 ls -lh 查看指定文件大小
 
@@ -263,7 +263,7 @@ $ find . -type l -delete # 删除当前目录下的符号链接
 1. 查找目录：find /（查找范围） -name '查找关键字' -type d
 2. 查找文件：find /（查找范围） -name 查找关键字 -print
 
-![image](../images/linux_basic/285954fe-e25e-4957-baee-29c1cacff6d9.png)
+![image](../images/linux_basic/find_name.png)
 
 ### 3.8 hdfs 命令详解
 
@@ -273,7 +273,7 @@ $ find . -type l -delete # 删除当前目录下的符号链接
 
 `top` 命令是 `Linux` 下常用的性能分析工具，能够实时显示系统中各个进程的资源占用状况，类似于 `Windows` 的任务管理器。
 
-![image](../images/linux_basic/78316e49-97f8-41cf-a9d9-b8f7e2ce024d.png)
+![image](../images/linux_basic/top_info.png)
 
 `load average` 后面分别是 1分钟、5分钟、15分钟的负载情况。数据是每隔 5 秒钟检查一次活跃的进程数，然后根据这个数值算出来的。如果这个数除以 CPU  的数目，**结果高于 5 的时候就表明系统在超负荷运转了**。
 
@@ -304,7 +304,7 @@ $ find . -type l -delete # 删除当前目录下的符号链接
 
 ### 3.13 vim 跳转到行尾和行首命令
 
-![image](../images/linux_basic/20c9770d-41d5-4880-9b43-335934bebccd.png)
+![image](../images/linux_basic/vim_keys.png)
 
 1. 跳到文本的最后一行行首：按`“G”`,即`“shift+g”`；
 2. 跳到最后一行的最后一个字符 ： 先重复 1 的操作即按“G”，之后按“\$”键，即`“shift+4”`；
@@ -326,7 +326,7 @@ $ find . -type l -delete # 删除当前目录下的符号链接
 ```bash
 # lscpu | grep -E '^Thread|^Core|^Socket|^CPU\(' 查看 cpu 核数和线程数
 ```
-![image](../images/linux_basic/0ac7fde7-15c9-44e4-9bbf-dc22f48a0360.png)
+![image](../images/linux_basic/lscpu.png)
 
 ### 3.16 mkdir -p 创建多层目录
 
@@ -350,8 +350,8 @@ gcc -v
 * `cat /etc/os-release`: 适用于所有 Linux 系统。能显示较为全面的系统信息。
 * `cat /proc/version`:  该文件记录了 Linux 内核的版本、用于编译内核的 `gcc` 的版本、内核编译的时间，以及内核编译者的用户名。
 
-![image](../images/linux_basic/a1561fd2-f491-4aaf-9a09-c1aa71b1e148.png)
-![image](../images/linux_basic/4ab2b6b3-a1cd-4e9e-8f76-fc6d59b1a557.png)
+![image](../images/linux_basic/lsb_release.png)
+![image](../images/linux_basic/gcc_version.png)
 
 > `release` 文件通常被视为操作系统的标识。在 `/etc` 目录下放置了很多记录着发行版各种信息的文件，每个发行版都各自有一套这样记录着相关信息的文件。`LSB`（Linux 标准库Linux Standard Base）能够打印发行版的具体信息，包括发行版名称、版本号、代号等。
 
