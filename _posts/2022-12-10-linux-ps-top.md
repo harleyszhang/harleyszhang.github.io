@@ -16,7 +16,7 @@ categories: Linux
 `ps` 是 进程状态 `(process status)` 的缩写，它能显示系统中活跃的/运行中的进程的信息, 包括用户名、用户 `ID`、`CPU` 使用率、内存使用、进程启动日期时间、命令名等等。只打印命令名字而不是命令的绝对路径，以运行下面的格式 ps 命令：
 
 ```bash
-~$ ps -eo pid,ppid,%mem,%cpu,comm --sort=-%cpu | head
+~$ ps -eo pid, ppid, %mem, %cpu, comm --sort=-%cpu | head
 ```
 运行结果如下：
 
