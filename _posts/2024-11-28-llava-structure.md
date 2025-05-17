@@ -427,16 +427,16 @@ def merge_input_ids_with_image_features(
 - `image_token_index` 参数用于**标识输入文本中预留来插入图像特征的位置**。也就是说，当输入的 token 序列中出现值等于 `image_token_index` 的 token 时，说明这个位置不是真正的文本 token，而是一个**占位符**，后续将用图像特征来替换或扩展该位置的信息。示例：llava 系列模型，image_token_index = 32000。
 
 **merge_input_ids_with_image_features 主要步骤详解**：
-1. **提取图像尺寸**：获取图像特征尺寸如 (1, 576, 4096) 和输入文本序列尺寸 (1, 22)
+1. **提取图像尺寸**：获取图像特征尺寸如 (1, 576, 1024) 和输入文本序列尺寸 (1, 22)
 2. **计算 mask 和 padding 方向**：
 	- 创建注意力掩码区分真实 token 和填充 token
 	- 检测填充方向（左填充或右填充）
 	- 创建图像标记掩码，找出所有特殊图像 token 的位置
 3. **计算新序列总长度 max_embed_dim**：
 	- 对于每个图像 token，需要将其扩展为 576 个位置（对应 576 个图像 patch）
-	- 总序列长度 = **原始文本长度 + (图像 patch 数量-1) × 图像 token 数量**
+	- 总序列长度 = **原始文本长度 + (图像 patchs 数量-1)**
 	- 例如：22 + (576-1) × 1 = 597
-4. **计算每个原始 token 在新序列中的位置 `new_token_positions`**：
+4. **计算每个原始 token 在新序列中的位置`new_token_positions`**：
 	- 使用累积和 `torch.cumsum` 计算每个原始 token 在新序列中的位置 new_token_positions
 	- 对于普通 `token`，在新序列中占一个位置
 	- 对于图像 `token`，在新序列中占用 576 个位置
@@ -546,7 +546,7 @@ def merge_input_ids_with_image_features(
 
 ### 5.1 步骤拆解
 
-通过示例来理解函数效果和每个步骤作用
+通过示例来理解函数效果和每个步骤作用:
 
 ```python
 # === 输入示例 ===
