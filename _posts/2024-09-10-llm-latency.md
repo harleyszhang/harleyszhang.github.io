@@ -139,7 +139,7 @@ $$\text{prefill latency} = \frac{s \cdot \text{decode latency}}{A_f/A_{bm}}$$
 - 预估 MLP 乘法的 flops 时间（这是受 flops 限制的！）为 $12\times 5120^2\times 512/312e12 = 344us$。而实际最低时间是 476 微秒，说明我们只达到了理论 flops 的 72%。
 - 对于注意力投影层，理论预估时间为 $2\times 5120^2\times 512/312e12 = 86 us$ ，而性能剖析中最低时间是 159 微秒，仅为 54%。这非常糟糕！但好像也符合现实，参见这篇论文的图 14，$512\times 4000\times 4000$ 张量的计算效率不到 $150\text{TFLOPs/s}$。
 
-综上分析：**实际测试的 prefill/decode latency 和公式理论预估 latency 的差距主要来自：中间激活、线性层的计算效率低于 90%、内存带宽利用率低于 90%** 和其他次要因素如 token 嵌入、top-(k|p) 操作和内核启动时间。且对于小 `batch` decode 阶段会出现明显的内存带宽利用率不足，prefill 阶段会出现明显的算力利用率不足。
+综上分析：**实际测试的 prefill/decode latency 和公式理论预估 latency 的差距主要来自：中间激活、线性层的计算效率低于 90%、内存带宽利用率低于 90%** 和其他次要因素如 token 嵌入、`top-(k|p)` 操作和内核启动时间。且对于小 `batch` decode 阶段会出现明显的内存带宽利用率不足，prefill 阶段会出现明显的算力利用率不足。
 
 ## 三 批次大小对性能影响的分析
 
