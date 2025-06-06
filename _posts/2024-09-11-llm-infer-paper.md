@@ -3,7 +3,7 @@ layout: post
 title: llm 推理揭秘论文翻译
 date: 2024-09-11 22:00:00
 summary: 翻译 llm 推理揭秘论文。
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [摘要](#摘要)

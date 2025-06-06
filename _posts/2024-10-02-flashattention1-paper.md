@@ -3,7 +3,7 @@ layout: post
 title: flashattention1 论文解读
 date: 2024-10-02 22:00:00
 summary: flashattention1 论文解读
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [1. 介绍](#1-介绍)

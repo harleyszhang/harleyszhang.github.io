@@ -3,7 +3,7 @@ layout: post
 title: flashattention1-2-3 系列总结
 date: 2024-10-07 12:00:00
 summary: flashattention1-2-3系列总结
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [1. Online Softmax](#1-online-softmax)
