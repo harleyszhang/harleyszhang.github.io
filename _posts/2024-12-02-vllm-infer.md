@@ -1,9 +1,9 @@
 ---
 layout: post
 title: vllm 推理流程剖析
-date: 2024-12-01 23:50:00
+date: 2024-12-02 23:50:00
 summary: 总结了 vllm 的推理架构和流程。
-categories: Framework_analysis
+categories: LLM_Infer_Optimize
 ---
 
 简单来讲，大模型推理一般会经历 4 个流程：Tokenizer -> Model.forward -> Sampler -> DeTokenizer，但对于集成了各种优化技术的 vllm 框架来说，大模型推理服务流程是非常复杂的

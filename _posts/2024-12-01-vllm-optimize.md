@@ -1,9 +1,9 @@
 ---
 layout: post
 title: vllm优化技术速览
-date: 2024-10-26 18:00:00
+date: 2024-12-01 18:00:00
 summary: vllm优化技术速览，介绍 PagedAttention、连续批处理技术方案。
-categories: Framework_analysis
+categories: LLM_Infer_Optimize
 ---
 
 - [一 PagedAttention](#一-pagedattention)
