@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Pytorch 张量分析
+title: Pytorch 张量实现分析
 date: 2025-03-29 19:00:00
 summary: pytorch 张量的属性、底层实现分析以及应用，内容持续更新中。
 categories: Framework_analysis
