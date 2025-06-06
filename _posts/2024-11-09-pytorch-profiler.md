@@ -3,7 +3,7 @@ layout: post
 title: Pytorch 性能分析器使用探究
 date: 2024-11-09 20:50:00
 summary: Pytorch 性能分析器使用探究。
-categories: DeepLearning
+categories: Framework_analysis
 ---
 
 ## 用法

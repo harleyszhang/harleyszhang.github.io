@@ -3,7 +3,7 @@ layout: post
 title: deepspeed-通过系统优化和压缩加速大规模模型推理和训练
 date: 2023-07-03 22:00:00
 summary: DeepSpeed 支持 chatglm-6b 到 GPT-3 175B 等规模大模型,其用于优化推理成本和延迟的新技术主要包括：推理自适应并行性、针对推理优化的 CUDA 内核和有效的量化感知训练。
-categories: LLM_Infer
+categories: Framework_analysis
 ---
 
 - [一，背景知识](#一背景知识)

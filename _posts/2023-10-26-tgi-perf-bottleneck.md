@@ -3,7 +3,7 @@ layout: post
 title: tgi 性能瓶颈分析实验
 date: 2023-10-26 22:00:00
 summary: TGI 动态性能测试实验分析
-categories: LLM_Infer
+categories: Framework_analysis
 ---
 
 前言：分析性能瓶颈，对比  2/4/8卡 A40、8卡 A100 的 prefill、decode、通信耗时占比区别，给出定量结论。

@@ -3,7 +3,7 @@ layout: post
 title: vllm 优化之 cuda_graph 详解
 date: 2024-11-08 23:50:00
 summary: cuda graph 解决了可能存在的所有 CPU 开销的来源：如用户编写的逻辑、PyTorch 调度逻辑、内存分配开销以及 GPU 驱动/内核开销（静态图优势）。
-categories: LLM_Infer
+categories: Framework_analysis
 ---
 
 - [一 vllm 中的 cuda graph](#一-vllm-中的-cuda-graph)
