@@ -8,7 +8,7 @@ categories: Framework_analysis
 
 - [1. pytorch 代码库结构](#1-pytorch-代码库结构)
 - [2. c10 核心基础库](#2-c10-核心基础库)
-- [3. pytorch 在 macOS 上的编译安装](#3-pytorch-在-macos-上的编译安装)
+- [3. ATen 模块](#3-aten-模块)
 - [参考资料](#参考资料)
 
 ## 1. pytorch 代码库结构
@@ -51,10 +51,10 @@ PyTorch 2.x 的源码主要划分为多个顶级目录，每个目录承担不�
       - `native/quantized`: 量化张量（即 QTensor）算子的实现。
 3. `torch/`：真正的 PyTorch 库，除 `csrc` 目录中的内容外，其余部分都是 Python 模块，遵循 PyTorch Python 前端模块结构。
     - `csrc`: 构成 PyTorch 库的 C++ 文件。该目录树中的文件混合了 **Python 绑定代码**和大量 `C++` 底层实现。有关 Python 绑定文件的正式列表，请参阅 `setup.py`；通常它们以 python_ 为前缀。
-     	- `jit`: TorchScript JIT 前端的编译器及前端。一个编译堆栈（TorchScript）用于从 PyTorch 代码创建可序列化和可优化的模型。
-     	- `autograd`: **自动求导（Autograd）系统实现**。系统的核心设计原则是为每个关键数据类型提供两套实现：C++ 类型和 Python 对象类型。以变量（Variable）为例，系统包含 variable.h 中的 Variable C++ 类型和 python_variable.h 中的 THPVariable Python 类型。
-     	- `api`: PyTorch 的 C++ 前端。
-     	- `distributed`: PyTorch 的分布式训练支持。
+      - `jit`: TorchScript JIT 前端的编译器及前端。一个编译堆栈（TorchScript）用于从 PyTorch 代码创建可序列化和可优化的模型。
+      - `autograd`: **自动求导（Autograd）系统实现**。系统的核心设计原则是为每个关键数据类型提供两套实现：C++ 类型和 Python 对象类型。以变量（Variable）为例，系统包含 variable.h 中的 Variable C++ 类型和 python_variable.h 中的 THPVariable Python 类型。
+      - `api`: PyTorch 的 C++ 前端。
+      - `distributed`: PyTorch 的分布式训练支持。
 4. `tools`: 供 PyTorch 库使用的代码生成脚本。
 
 ![pytorch_src](../images/pytorch/pytorch_src.png)
@@ -66,44 +66,41 @@ PyTorch 2.x 的源码主要划分为多个顶级目录，每个目录承担不�
 - `c10/util/`：工具模块，提供通用的 C++ 实用组件。如 intrusive_ptr 智能指针、`UniqueVoidPtr` 通用指针封装、`Exception` 异常处理、日志和元编程工具等，供整个框架使用。
 - `c10/macros/`：宏定义模块，包含编译配置相关的宏。例如根据操作系统和编译选项生成的 cmake_macros.h，以及 C10_API, TORCH_API, CAFFE2_API 等符号导出控制宏​。
 - `c10/cuda/`, c10/hip/, c10/metal/, c10/xpu/ 等：特定设备平台支持代码, 这些目录有助于在 c10 层面适配不同硬件平台。例如:
-	- c10/cuda 中包含 **CUDA 后端初始化、流管理等与 CUDA 设备相关的基础功能**；
-	- c10/hip 类似地对应 AMD 的 HIP；
-	- c10/metal 针对苹 Metal 后端；
-	- c10/xpu 则可能用于其他加速器（如 Intel XPUs）。
+  - c10/cuda 中包含 **CUDA 后端初始化、流管理等与 CUDA 设备相关的基础功能**；
+  - c10/hip 类似地对应 AMD 的 HIP；
+  - c10/metal 针对苹 Metal 后端；
+  - c10/xpu 则可能用于其他加速器（如 Intel XPUs）。
 - `c10/mobile/`：移动端支持代码，为在移动/嵌入式场景下裁剪和优化 PyTorch 而设。
 - `c10/test/`：c10 本身的一些单元测试代码。
 
-## 3. pytorch 在 macOS 上的编译安装
+## 3. ATen 模块
 
-`Cmake` 使用 `brew` 方式安装，不推荐用 `conda` 安装，版本优先推荐 `3.31`:
-```bash
-(torch) ～ % cmake --version
-cmake version 3.31.6 
-```
+aten/（A Tensor Library）是 PyTorch 的核心组件，负责实现 Tensor 计算、自动微分（Autograd）、跨后端算子分发、算子在各个设备（cuda、cpu）上具体实现（aten/src/ATen/native/）。
 
-在环境中有 conda 的基础上，按照以下步骤编译按照 cpu 版本的 pytorch。
+aten/src/ATen/目录提供了 aten 模块的具体代码实现，核心子目录的作用如下所示：
+- core/ ：核心函数库，逐步往 c10迁移中。定义 Tensor 的核心数据结构、类型系统和 API。
+- native/：原生算子库。各后端（CPU、CUDA、XLA 等）的算子实际实现（如卷积、矩阵乘法）。
+- autograd/：自动微分引擎（如 Variable、Function 的实现）。
+- vulkan/、metal/：移动端和 GPU 后端支持。
+- quantized/：量化算子实现。
 
-```bash
-# 1, 创建名为 torch_dev 的虚拟环境，指定 python 版本为 3.12
-conda create --name torch_dev python=3.12
-conda activate torch_dev # 可不执行
+aten/src/ATen/core 子模块
+- 作用：定义 Tensor 的核心数据结构、类型系统和基础接口。
+- 关键文件：
+  - Tensor.h：Tensor 类的定义（核心分析对象）。
+  - TensorBase.h：Tensor 的基类，提供轻量级接口。
+  - DispatchKeySet.h：操作符分派机制（如 CPU/CUDA/Autograd 的动态分派）。
+  - ScalarType.h：数据类型（dtype）的枚举定义。
 
-# 2，安装依赖包
-conda install cmake ninja
-pip install -r requirements.txt
-# 如果需要 torch.distributed 模块的功能
-conda install pkg-config libuv
+aten/src/ATen/native 子模块
+- 作用：各后端的原生算子实现。
+- 关键子目录：
+  - cpu/：CPU 算子实现（如 Conv2d.cpp）。
+  - cuda/：CUDA 算子实现（如 CUDABlas.cpp）。
+  - Composite/：组合算子（由基础算子拼接而成）。
+  - meta/：元算子（用于形状推导）。
 
-# 如果本地电脑 macos 系统中没有 cmake 或者版本低于3.15
-brew install cmake
-
-# 3,编译安装 torch 包（这个过程耗时非常严重）
-MAX_JOBS=8 python setup.py develop # 使用 8 个并行任务同时编译
-```
-
-<div align="center">
-<img src="../images/pytorch/pytorch_build.jpg" width="50%" alt="result">
-</div>
+![aten_code_summary](../images/pytorch/aten_code_summary.png)
 
 ## 参考资料
 
