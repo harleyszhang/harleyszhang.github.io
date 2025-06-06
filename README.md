@@ -1,9 +1,8 @@
 # [harleyszhang](https://harleyszhang-github-io.vercel.app/)
 
-- 🌱 我是一名深度学习推理部署工程师，会一点 python/c++/triton/cuda 编程
-- 🔭 从事过 LLM 推理部署、视觉算法开发、模型压缩部署以及算法SDK开发工作，终身学习践行者。
+- 🌱 我是一名大模型推理框架研发工程师，会一点 python/c++/triton/cuda 编程。
+- 🔭 从事过 LLM 推理框架、cnn/llm benchmark 工具、视觉算法 SDK 开发工作，终身学习践行者。
 - 💡 喜欢开源，相信长期主义，崇尚极简主义。
-- 🤔 正在寻求大模型推理部署的工作, 📫 联系我: zhg5200211@outlook.com
 
 ## 搜索引擎收录网站
 
