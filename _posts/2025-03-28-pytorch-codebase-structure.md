@@ -57,6 +57,8 @@ PyTorch 2.x 的源码主要划分为多个顶级目录，每个目录承担不�
      	- `distributed`: PyTorch 的分布式训练支持。
 4. `tools`: 供 PyTorch 库使用的代码生成脚本。
 
+![pytorch_src](../images/pytorch/pytorch_src.png)
+
 ## 2. c10 核心基础库
 
 `c10` 作为 PyTorch 框架的**核心基础库**，其包含多个子模块：
