@@ -3,7 +3,7 @@ layout: post
 title: prompt-cache论文速读
 date: 2024-11-02 01:20:00
 summary: 基于 KV 缓存，Prompt Cache 通过使注意力状态（kv 向量）复用模块化，将重用范围从单个提示词扩展到多个提示词，也就是说不仅在 decode 阶段还在 prefill 阶段复用 kv。prompt cache 实现的一种方式是通过 PML 形式化输入序列，手动定义并可复用部分。在推理时，只计算未缓存的文本。官方实现代码在 prompt-cache。
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [摘要](#摘要)
