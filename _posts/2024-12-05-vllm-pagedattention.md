@@ -1,9 +1,9 @@
 ---
 layout: post
 title: vllm 优化之 PagedAttention 源码解读
-date: 2024-11-16 23:50:00
+date: 2024-12-05 23:50:00
 summary: 总结了 vllm 的 pagedattention 内核设计和动态分配、管理 kv cache 内存的模块流程，难点主要有三个：一个是 block_tables 的创建和管理，以及 gpu 设备在指定模型上的可分配的内存 blocks 的计算，最后就是 pagedattention 内核代码中相关线程索引和偏移的计算怎么改成基于 block_tables 的形式，这都需要反复阅读理解代码才能得到清晰的理解。
-categories: Framework_analysis
+categories: LLM_Infer_Optimize
 ---
 
 - [一 PagedAttention 内核](#一-pagedattention-内核)
