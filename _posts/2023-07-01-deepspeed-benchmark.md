@@ -3,7 +3,7 @@ layout: post
 title: deepspeed 框架 benchamrk 评测总结
 date: 2023-07-01 22:00:00
 summary: DS 是 deepspeed 框架的缩写，本文分别评测了 DeepSpeed、transformers、FasterTransformer 三个框架。
-categories: LLM_Infer
+categories: Framework_analysis
 ---
 
 DS 是 deepspeed 框架的缩写，本文分别评测了 DeepSpeed、transformers、FasterTransformer 三个框架。

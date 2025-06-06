@@ -3,7 +3,7 @@ layout: post
 title: llm服务框架特性总结
 date: 2024-11-08 20:00:00
 summary: 给出各大 llm 服务引擎的主要特性总结，大家都有的常规或者体现不出差距的特性则忽略。
-categories: LLM_Infer
+categories: Framework_analysis
 ---
 - [一 llm 服务引擎特性比较](#一-llm-服务引擎特性比较)
   - [1.1 vllm](#11-vllm)

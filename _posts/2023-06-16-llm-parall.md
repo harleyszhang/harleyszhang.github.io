@@ -3,7 +3,7 @@ layout: post
 title: llm 并行策略概述
 date: 2023-06-16 22:00:00
 summary: 简单介绍 llm 张量并行、数据并行的原理。
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [一，集合通信及其通信原语](#一集合通信及其通信原语)
