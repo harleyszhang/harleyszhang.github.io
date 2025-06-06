@@ -3,7 +3,7 @@ layout: post
 title: llm 综合分析论文翻译
 date: 2024-09-12 22:00:00
 summary: 翻译 llm 综合分析论文。
-categories: LLM_Infer
+categories: LLM_Infer_Optimize
 ---
 
 - [大语言模型的综合性能分析](#大语言模型的综合性能分析)
