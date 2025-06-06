@@ -2,27 +2,16 @@
 layout: post
 title: Pytorch 框架架构目录概览
 date: 2025-03-28 19:00:00
-summary: pytorch 架构介绍和主目录作用、和模块之间关系分析。
+summary: pytorch 代码库结构拆解，以及核心目录的功能概述。
 categories: Framework_analysis
 ---
 
-- [1. pytorch 框架概述](#1-pytorch-框架概述)
-- [2. pytorch 源码目录](#2-pytorch-源码目录)
-  - [c10 核心基础库](#c10-核心基础库)
-- [3. 在 macOS 上的编译安装](#3-在-macos-上的编译安装)
+- [1. pytorch 代码库结构](#1-pytorch-代码库结构)
+- [2. c10 核心基础库](#2-c10-核心基础库)
+- [3. pytorch 在 macOS 上的编译安装](#3-pytorch-在-macos-上的编译安装)
 - [参考资料](#参考资料)
 
-## 1. pytorch 框架概述
-
-`PyTorch` 框架本质上是一个支持自动微分的张量库，张量是 PyTorch 中的核心数据结构。
-1. 从直观上理解，其是一种包含某种标量类型（比如浮点数和整型数等）的 n 维数据结构。
-2. 从代码角度看，张量可以看作是包含一些数据成员的结构体/类对象，比如，张量的尺寸、张量的元素类型（dtype）、张量所在的设备类型（CPU 内存？CUDA 内存？）和步长 `stride` 等数据成员。
-
-<div align="center">
-<img src="../images/pytorch/tensor_define.png" width="60%" alt="tensor_define">
-</div>
-
-## 2. pytorch 源码目录
+## 1. pytorch 代码库结构
 
 PyTorch 2.x 的源码主要划分为多个顶级目录，每个目录承担不同的功能，通过 `tree -L 1 -d` 显示当前目录的 `1` 层子目录。
 
@@ -50,27 +39,27 @@ PyTorch 2.x 的源码主要划分为多个顶级目录，每个目录承担不�
 虽然第一级的子目录很多，但是对于开发者来说，最核心和重要的子目录就那几个，简单总结下其作用和相互关系：
 
 1. `c10/`：PyTorch 的**核心基础库目录**。
-   - c10 子目录提供了**在各平台通用的基础构件**，包括**Tensor 元数据和存储实现、调度分发机制（dispatcher）、流（Stream）、事件（Event）等**​。
+   - `c10` 子目录提供了**在各平台通用的基础构件**，包括 **Tensor 元数据和存储实现、调度分发机制（dispatcher）、流（Stream）、事件（Event）等**​。
    - 它其实是 PyTorch 和 Caffe2 合并后抽象出的统一核心层，“c10” 名字取自 “Caffe2” 与 “A Ten”的谐音（`C Ten`）。
-   - c10 本身不包含算子的实现，它更多的是提供一些辅助张量自动微分机制的抽象模块和类。
-2. `aten/`：ATen (“A Tensor”) 库目录。ATen 是 PyTorch 的**张量运算核心库**（C++ 实现），提供张量及其操作的定义和实现​。它不直接包含自动求导逻辑，主要关注**张量的创建、索引、数学运算、张量运算等 kernel 操作和实现的功能**。aten/src/ATen 下有核心子目录：
-    - `ATen/core`：ATen 的核心功能（部分正逐步迁移到顶层的 c10 目录）。
+   - `c10` 本身不包含算子的实现，它更多的是提供一些辅助张量自动微分机制的抽象模块和类。
+2. `aten/`：`ATen` (“A Tensor”) 库目录。`ATen` 是 PyTorch 的**张量运算核心库**（`C++` 实现），提供张量及其操作的定义和实现​。它不直接包含自动求导逻辑，主要关注**张量的创建、索引、数学运算、张量运算等 `kernel` 操作和实现的功能**。`aten/src/ATen` 下有核心子目录：
+    - `ATen/core`：ATen 的核心功能（部分正逐步迁移到顶层的 `c10` 目录）。
     - `ATen/native`：分算子（operators）的 `native` 实现。如果要新增算子，一般将实现放在这里​。根据设备类型又细分子目录:
       - `native/cpu`: 并非真正意义上的 CPU 算子实现，而是经过特定处理器指令（如 AVX）编译的实现。​。
       - `native/cuda`: 算子的 CUDA 实现。
       - `native/sparse`:  COO 格式稀疏张量操作在 CPU 和 CUDA 上的实现。
       - `native/quantized`: 量化张量（即 QTensor）算子的实现。
-3. `torch/`：真正的 PyTorch 库，除 csrc 中的内容外，其余部分都是 Python 模块，遵循 PyTorch Python 前端模块结构。
-    - `csrc`: 构成 PyTorch 库的 C++ 文件。该目录树中的文件混合了 Python 绑定代码和大量 C++ 底层实现。有关 Python 绑定文件的正式列表，请参阅 `setup.py`；通常它们以 python_ 为前缀。
-	- `jit`: TorchScript JIT 前端的编译器及前端。一个编译堆栈（TorchScript）用于从 PyTorch 代码创建可序列化和可优化的模型。
-	- `autograd`: **反向自动微分的实现**。详见 README。
-	- `api`: PyTorch 的 C++ 前端。
-	- `distributed`: PyTorch 的分布式训练支持。
+3. `torch/`：真正的 PyTorch 库，除 `csrc` 目录中的内容外，其余部分都是 Python 模块，遵循 PyTorch Python 前端模块结构。
+    - `csrc`: 构成 PyTorch 库的 C++ 文件。该目录树中的文件混合了 **Python 绑定代码**和大量 `C++` 底层实现。有关 Python 绑定文件的正式列表，请参阅 `setup.py`；通常它们以 python_ 为前缀。
+     	- `jit`: TorchScript JIT 前端的编译器及前端。一个编译堆栈（TorchScript）用于从 PyTorch 代码创建可序列化和可优化的模型。
+     	- `autograd`: **自动求导（Autograd）系统实现**。系统的核心设计原则是为每个关键数据类型提供两套实现：C++ 类型和 Python 对象类型。以变量（Variable）为例，系统包含 variable.h 中的 Variable C++ 类型和 python_variable.h 中的 THPVariable Python 类型。
+     	- `api`: PyTorch 的 C++ 前端。
+     	- `distributed`: PyTorch 的分布式训练支持。
 4. `tools`: 供 PyTorch 库使用的代码生成脚本。
 
-### c10 核心基础库
+## 2. c10 核心基础库
 
-c10 作为 PyTorch 框架的**核心基础库**，其包含多个子模块：
+`c10` 作为 PyTorch 框架的**核心基础库**，其包含多个子模块：
 - `c10/core/`：核心组件，定义了 PyTorch **核心数据结构和机制**。例如包含 `TensorImpl`（张量底层实现类）​、`Storage`（张量存储）、`DispatchKey` 和 `Dispatcher`（动态算子调度）、设备类型 `Device`、类型元信息 `TypeMeta` 等基础定义。
 - `c10/util/`：工具模块，提供通用的 C++ 实用组件。如 intrusive_ptr 智能指针、`UniqueVoidPtr` 通用指针封装、`Exception` 异常处理、日志和元编程工具等，供整个框架使用。
 - `c10/macros/`：宏定义模块，包含编译配置相关的宏。例如根据操作系统和编译选项生成的 cmake_macros.h，以及 C10_API, TORCH_API, CAFFE2_API 等符号导出控制宏​。
@@ -82,13 +71,11 @@ c10 作为 PyTorch 框架的**核心基础库**，其包含多个子模块：
 - `c10/mobile/`：移动端支持代码，为在移动/嵌入式场景下裁剪和优化 PyTorch 而设。
 - `c10/test/`：c10 本身的一些单元测试代码。
 
-## 3. 在 macOS 上的编译安装
-
-前置安装条件：
+## 3. pytorch 在 macOS 上的编译安装
 
 `Cmake` 使用 `brew` 方式安装，不推荐用 `conda` 安装，版本优先推荐 `3.31`:
 ```bash
-(torch) honggao@U-9TK992W3-1917 pytorch % cmake --version
+(torch) ～ % cmake --version
 cmake version 3.31.6 
 ```
 
