@@ -40,17 +40,17 @@ DeepSeek-V2 架构图如下所示：
 
 ### 2.1 多头潜变量注意力（MLA）：提升推理效率
 
-传统的 Transformer 模型通常采用多头注意力（MHA），但在生成（generation）过程中，其庞大的 Key-Value（KV）缓存会成为限制推理效率的瓶颈。为减少 KV 缓存占用，研究者提出了**多查询注意力**（MQA）（Shazeer, 2019）和**分组查询注意力**（GQA）（Ainslie et al., 2023）。这两种方法虽然减少了 KV 缓存需求，但在性能上仍无法与 MHA 相媲美（关于 MHA、GQA 和 MQA 的消融实验见附录 D.1）。
+传统的 Transformer 模型通常采用多头注意力（MHA），但在生成（generation）过程中，其庞大的 Key-Value（KV）缓存会成为限制推理效率的瓶颈。为减少 KV 缓存占用，研究者提出了**多查询注意力**（MQA）（Shazeer, 2019）和**分组查询注意力**（GQA）(Ainslie et al., 2023)。这两种方法虽然减少了 KV 缓存需求，但在性能上仍无法与 MHA 相媲美（关于 MHA、GQA 和 MQA 的消融实验见附录 D.1）。
 
-DeepSeek-V2 引入了一种全新的注意力机制**多头潜变量注意力**（`MLA`）。MLA 结合了**低秩键值联合压缩**（low-rank key-value joint compression,），在推理时大幅降低 KV 缓存需求，同时在性能上超越 MHA。
-> MLA 本质上是通过低秩转换的思路减少 head 的维度，即换为一个压缩的 QKV，存储的KV 的维度显著减小，而不是 GQA 方法减少 kv heads 的数量。
+DeepSeek-V2 引入了一种全新的注意力机制**多头潜变量注意力**（`MLA`）。MLA 结合了**低秩键值联合压缩**（low-rank key-value joint compression），在推理时大幅降低 KV 缓存需求，同时在性能上超越 MHA。
+> `MLA` 本质上是通过低秩转换的思路减少 `head` 的维度，即换为一个压缩的 `QKV`，存储的 `KV` 的维度显著减小，而不是 GQA 方法减少 kv heads 的数量。
 
 #### 2.1.1 Standard Multi-Head Attention
 
-先回顾下标准的**多头注意力（MHA）机制**。设 $d$ 为嵌入维度，$n_h$ 为注意力头数，$d_h$ 为单个注意力头的维度，$h_t \in R_d$ 表示第 $t$ 个 token 进入注意力层的输入向量。
+先回顾下标准的**多头注意力（MHA）机制**。设 $d$ 为嵌入维度，$n_h$ 为注意力头数，$d_h$ 为每个注意力头的维度，$h_t \in R_d$ 表示第 $t$ 个 token 进入注意力层的输入向量，$l$ 表示 decoder layers 数目。
 
-在 MHA 机制中，我们通过三个投影矩阵 $W_Q、W_K、W_V \in \mathbb{R}^{n_h d_h\times d}$ 分别计算得到查询向量、键向量和值向量（$q_t、k_t、v_t \in \mathbb{R}^{n_h d_h}$），QKV 向量的线性变换公式如下所示：
-> QKV 的线性变换的权重矩阵的第二个维度大小一定为嵌入维度 $d$。
+在 MHA 机制中，我们通过三个投影矩阵 $W_Q、W_K、W_V \in \mathbb{R}^{n_h d_h\times d}$ 分别计算得到查询向量、键向量和值向量（$q_t、k_t、v_t \in \mathbb{R}^{n_h d_h}$），`QKV` 向量的线性变换公式如下所示：
+> `QKV` 的线性变换的权重矩阵的第二个维度大小一定为嵌入维度 $d$。
 
 $$
 \mathbf{q}_t = W^Q \mathbf{h}_t, \tag{1}
@@ -83,13 +83,13 @@ $$\mathbf{u}_t = W^O [\mathbf{o}_{t,1}; \mathbf{o}_{t,2}; \dots; \mathbf{o}_{t,n
 
 其中，$q_{t,i}$, $k_{t,i}$, $v_{t,i} \in \mathbb{R}^{d_h}$ 分别表示第 $i$ 个注意力头的查询（query）、键（key）和值（value）；$W_O \in \mathbb{R}^{d \times d_h n_h}$ 表示输出投影矩阵。在推理过程中，key 和 value 需要被缓存，以加速计算，避免重复计算。
 
-标准 `MHA` 每个 `token` 的 kv 缓冲大小 = $2n_hd_h l$，单位为字节 `byte`；如果使用了 `GQA` 优化技术，每个 token 的 kv 缓冲大小变为 $2n_{kv}d_h l = 2n_hd_h l/\text{groups}$ 个元素。下标 $t$ 表示第几个 token，下标 $[1, n_h]$ 表示注意力头数，$l$ 表示 decoder layers 数目。
+标准 `MHA` 每个 `token` 的 kv 缓冲大小 = $2n_hd_h l$，单位为字节 `byte`；如果使用了 `GQA` 优化技术，每个 token 的 kv 缓冲大小变为 $2n_{kv}d_h l = 2n_hd_h l/\text{groups}$ 个元素。
 
-在模型部署时，这种庞大的 KV 缓存 成为了一个主要的瓶颈，限制了**最大批量大小**（batch size）和**序列长度**（sequence length）。
+模型部署时，在有限的 gpu 显存前提下，这种庞大的 KV 缓存成为了一个主要的瓶颈，限制了**最大批量大小**（batch size）和**序列长度**（sequence length）。
 
 #### 2.1.2 Low-Rank Key-Value Joint Compression
 
-MLA 的核心是对**键**（keys）和**值**（values）进行**低秩联合压缩**（low-rank joint compression），以减少 KV 缓存（KV cache）的占用：
+MLA 的核心是对**键**（keys）和**值**（values）进行**低秩联合压缩**（low-rank joint compression），以减少 KV 缓存（KV cache）：
 
 $$
 \mathbf{c}_t^{KV} = W^{DKV} \mathbf{h}_t,
@@ -108,12 +108,12 @@ $$
 
 `KV` 向量的生成是先投影到一个**低维**（`5120 -> 512`）的 `compressed_kv` 向量（$\mathbf{c}_t^{KV}$）再升维展开得到 $\mathbf{k}_t^{C}$ 和 $\mathbf{v}_t^{C}$。上述公式的各个变量定义：
 
-- $\mathbf{c}_t^{KV}$ 是 `keys` 和 `values` 的**压缩后的潜在向量**（`latent vector`）；
-- $d_c (\ll d_h n_h)$ 代表 `KV` 压缩维度（KV compression dimension）
+- $\mathbf{c}_t^{KV} \in \mathbb{R}^{d_c}$ 是 `keys` 和 `values` **压缩后的潜在向量**（`latent vector`）；
+- $d_c (\ll d_h n_h)$ 代表 `KV` 压缩维度（KV compression dimension）；
 - $W^{DKV} \in \mathbb{R}^{d_c \times d}$ 是**降维投影矩阵**（down-projection matrix）；
 - $W^{UK}, W^{UV} \in \mathbb{R}^{d_h n_h \times d_c}$ 分别是 keys 和 values 的**升维投影矩阵**（up-projection matrices）。
 
-另外，虽然不能减少 KV Cache 的占用，但是为了**减少训练时的激活内存**（activation memory），同样也对查询（queries）也进行了**低秩压缩**（low-rank compression）。同样也是先投影到一个**低维**（`5120 -> 1536`）的 `compressed_kv` 向量（$\mathbf{c}_t^{Q}$）再升维展开得到 $\mathbf{q}_t^{C}$:
+另外，虽然不能减少 KV Cache，但是为了**减少训练时的激活内存**（activation memory），同样也对查询（queries）也进行了**低秩压缩**（low-rank compression）。同样也是先投影到一个**低维**（`5120 -> 1536`）的 `compressed_kv` 向量（$\mathbf{c}_t^{Q}$）再升维展开得到 $\mathbf{q}_t^{C}$:
 
 $$
 \mathbf{c}_t^{Q} = W^{DQ} \mathbf{h}_t,
@@ -133,7 +133,7 @@ $$
 
 #### 2.1.3 Decoupled Rotary Position Embedding
 
-和 DeepSeek 67B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用 旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
+和 DeepSeek 67B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
 
 具体来说，RoPE 使键（Key）和查询（Query）都具备**位置敏感性**（position sensitivity）。如果我们在**压缩后的键** $\mathbf{k}_t^{C}$ 上应用 ROPE，那么实际上我们得到的键表示会是这样的形式：
 
