@@ -106,7 +106,7 @@ $$
 \tag{11}
 $$
 
-`KV` 向量的生成是先投影到一个**低维**（`5120 -> 512`）的 `compressed_kv` 向量（$\mathbf{c}_t^{KV}$）再升维展开得到 $\mathbf{k}_t^{C}$ 和 $\mathbf{v}_t^{C}$。上述公式的各个变量定义：
+`KV` 向量的生成是先投影到一个**低维**（`hidden_size --> kv_lora_rank + qk_rope_head_dim`）的 `compressed_kv` 向量（$\mathbf{c}_t^{KV}$）再升维展开得到 $\mathbf{k}_t^{C}$ 和 $\mathbf{v}_t^{C}$。上述公式的各个变量定义：
 
 - $\mathbf{c}_t^{KV} \in \mathbb{R}^{d_c}$ 是 `keys` 和 `values` **压缩后的潜在向量**（`latent vector`）；
 - $d_c (\ll d_h n_h)$ 代表 `KV` 压缩维度（KV compression dimension）；
@@ -133,17 +133,17 @@ $$
 
 #### 2.1.3 Decoupled Rotary Position Embedding
 
-和 DeepSeek 67B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
+和 DeepSeek 671B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
 
-具体来说，RoPE 使键（Key）和查询（Query）都具备**位置敏感性**（position sensitivity）。如果我们在**压缩后的键** $\mathbf{k}_t^{C}$ 上应用 ROPE，那么实际上我们得到的键表示会是这样的形式：
+具体来说，`RoPE` 对键（Key）和查询（Query）都具备**位置敏感性**（position sensitivity）。如果我们在**压缩后的键** $\mathbf{k}_t^{C}$ 上应用 `ROPE`:
 
 $$k_t^R = \text{ROPE}(W^{UK} \mathbf{c}_t^{KV})$$
 
-很明显式（10）中的 $W^{UK}$ 和 RoPE 旋转矩阵在计算过程中“耦合”在一起—这意味着 $W^{UK}$ 输出的结果会始终被那个依赖于具体位置的旋转矩阵所“修正”或“调制”。
+则，公式（10）中的 $W^{UK}$ 将会和一个位置敏感的 RoPE 旋转矩阵在计算过程中“耦合”在一起，这意味着 $W^{UK}$ 输出的结果会始终被那个依赖于具体位置的旋转矩阵所“修正”或“调制”。
 
-这样会导致在执行 atten weight（$QK^T$）的计算优化中，无法像原本设想的那样，把 $W^{UK}$ 吸收到 $W^Q$  中，因为 当前生成 token 相关的 RoPE 矩阵位于 $W^Q$  和 $W^{UK}$ 之间，而矩阵乘法不满足交换律（commutative law）。这直接导致在推理过程中，我们必须**重新计算**所有 prefix token 的键（keys），这将显著降低推理效率。
+这样会导致在执行 atten weight（$QK^T$）的计算优化中，**无法把 $W^{UK}$ 吸收到 $W^Q$ 中**，因为和当前生成 token 相关的 RoPE 矩阵位于 $W^Q$ 和 $W^{UK}$ 之间，而矩阵乘法不满足交换律（commutative law）。这直接导致在推理过程中，我们必须**重新计算**所有 prefix token 的键（keys），这将显著降低推理效率。
 
-为了解决这个问题，作者提出了一种**解耦 RoPE**（decoupled RoPE）的策略，通过**额外引入多头查询**（multi-head queries）$q_{t,i}^R \in \mathbb{R}^{d^R_h}$和**采用一个共享键**（shared key) $k_t^R \in \mathbb{R}^{d^R_h}$ 来**承载 RoPE 信息**。其中 $d^R_h$  代表**解耦查询和键的每头维度**（per-head dimension of the decoupled queries and key）。
+为了解决这个问题，作者提出了一种**解耦 RoPE**（decoupled RoPE）的策略，通过**额外引入多头查询**（multi-head queries）$q_{t,i}^R \in \mathbb{R}^{d^R_h}$和**采用一个共享键**（shared key) $k_t^R \in \mathbb{R}^{d^R_h}$ 来**承载 RoPE **。其中 $d^R_h$  代表**解耦查询和键的每头维度**（per-head dimension of the decoupled queries and key）。
 
 在使用**解耦 RoPE 策略**后，`MLA` 的计算过程变成如下所示：
 
