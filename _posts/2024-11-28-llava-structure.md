@@ -9,7 +9,7 @@ categories: Transformer
 - [一 背景知识](#一-背景知识)
   - [1.1 ViT 模型结构](#11-vit-模型结构)
     - [ViT block 组成](#vit-block-组成)
-    - [输入切分为多个 path](#输入切分为多个-path)
+    - [输入切分为多个 patch](#输入切分为多个-patch)
   - [1.2 常见的多模态模型](#12-常见的多模态模型)
 - [二 LLaVA 系列模型](#二-llava-系列模型)
   - [2.1 LLaVA1](#21-llava1)
@@ -41,7 +41,7 @@ categories: Transformer
 
 一个 `ViT block` 由以下 5 部分组成：
 
-1. `Patch Embeddings`: 将输入图像划分为固定大小的补丁（patch），每个 patch 被展平为一个向量，并通过一个线性投影层（相当于将 patch 转换为 token embedding），嵌入的维度通常设为 768。
+1. `Patch Embeddings`: 将输入图像划分为固定大小的补丁（patch），每个 patch 被展平为一个向量，并通过一个线性投影层（相当于将 patch 转换为 token embedding），Embedding 维度通常设为 768。
 2. `Position Embeddings`: 添加位置编码（positional embedding），因为 Transformer 本身不具有处理图像空间信息的能力，位置编码能帮助模型了解每个 patch 在图像中的位置。
 3. `Transformer Encoder`: 与 NLP 中的 Transformer 类似，包括多个堆叠的 Transformer blocks。每个 block 包含以下两部分：
    - Multi-Head Self Attention (MHSA): 允许每个 patch 关注其他 patch 的信息。
@@ -49,11 +49,16 @@ categories: Transformer
 4. `Classification Head`: 将 Transformer Encoder 的输出（通常是第一个 token）传入全连接层（MLP Head）以生成最终的分类输出。
 5. `Layer Normalization and Skip Connections`: 在每个子层之后使用层归一化（Layer Normalization）和残差连接（skip connections）。
 
-#### 输入切分为多个 path
+#### 输入切分为多个 patch
 
-ViT 将输入图片分为多个 patch（`16x16`），再将每个 patch 投影为固定长度的向量送入 Transformer，后续encoder 的操作和原始 Transformer 中完全相同。另外，对于图片分类问题，在输入序列中加入一个特殊的 token，该 token 对应的输出即为最后的预测类别。
+ViT 将输入图片分为多个 patch（`16x16`），再将每个 patch 投影为固定长度的向量送入 Transformer，后续 encoder 的操作和原始 Transformer 中完全相同。如果是对于图片分类问题，则会在输入序列中加入一个特殊的 token，该 token 对应的输出即为最后的预测类别。
 
-举个例子来理解 patch embedding 过程: 假设输入图片大小为 $224 \times224$，path 大小为 $16\times 16$，则每张图片都会生成 $(224\times224)/(16\times16) = 196$ 个 patch，类似于 transformer 模型的输入序列长度为 196。每个 patch 维度大小 = $16\times 16\times 3 = 768$，类似于每个 `token` 映射成的向量长度为 768，输入序列会加上一个特俗字符 `cls`，因此最终的输入序列维度 = $197\times 768$（一共有 197 个token）。线性投射层的维度为 $768\times N (N=768)$，因此输入通过**线性投影层**之后的维度依然为 $197\times 768$。到此，我们详细的解析了通过 `patch embedding` 将一个视觉分类问题转换为 `seq2seq` 的问题。
+举个例子来理解 patch embedding 过程: 假设输入图片大小为 $224 \times224$，patch 大小为 $16\times 16$，则：
+1. 每张图片都会生成 $(224\times224)/(16\times16) = 196$ 个 patch，类似于 transformer 模型的输入序列长度为 196；
+2. 每个 patch 维度大小 = $16\times 16\times 3 = 768$，类似于每个 `token` 映射成的向量长度为 768；
+3. 输入序列会加上一个特殊令牌 `cls`，最终经过切分 patch 后的输入图像张量形状为 = $197\times 768$（一共有 `197` 个 token）。线性投影层的维度为 $768\times N (N=768)$，因此输入通过**线性投影层**之后的维度依然为 $197\times 768$。
+
+到此，我们详细的解析了 `patch embedding` 过程。
 
 ### 1.2 常见的多模态模型
 
