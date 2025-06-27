@@ -40,6 +40,7 @@ categories: LLM_Compression
 论文中提到 `SmoothQuant` 一共提供了 `3` 种量化量化粒度，从细到粗分别是：`per-channel`、`per-token`、`per-tensor` 量化，不同的粒度本质上是指**基于不同的粒度去计算量化缩放系数**。它们的定义描述如下:
 1. `per-tensor` 量化: 为整个张量使用一个统一的缩放系数（scale）和零点（zero point）;
 2. `per-token` 量化：同一 `token`（如序列中的每个单词或子词）才使用统一的缩放系数和零点，量化后缩放系数有 `[batch_size * seq_len]` 个；
+3. `per-group` 量化：将权重张量按某一维（通常是输出通道）分组，每组用同一 `scale/zero_point`，组的大小可自定义（如每16个通道为一组），通常精度比 `per-tensor` 高，略低于 `per-channel`。
 3. `per-channel` 量化：同一 `embeeding` 维度的才使用相同的缩放系数和零点，缩放系数总共 `[hidden_size]` 个；对于 CNN 模型，则是为张量的每个通道（例如，卷积层的每个输出通道或线性层的每个输出特征）使用独立的缩放因子和零点。
 
 权重 weight 支持`per-channel`、`per-tensor` 量化，其中获取权重张量最大值的区别如下所示：
@@ -112,6 +113,8 @@ $$X¯_{\text{INT8}} = \left\lfloor \frac{X_{\text{FP16}}}{\Delta} \right\rceil, 
 我们就可以实现权重和激活的量化算法，代码如下所示：
 
 ```python
+import torch
+
 @torch.no_grad()
 def quantize_weight_per_channel_absmax(weight, n_bits=8):
     """
@@ -128,6 +131,32 @@ def quantize_weight_per_channel_absmax(weight, n_bits=8):
     quantized = (weight / scales).round().clamp(-q_max, q_max).to(torch.int8)
 
     return quantized, scales
+
+
+@torch.no_grad()
+def per_group_quantize(weight, group_size=16, num_bits=8):
+    # weight: [out_channels, in_features]
+    qmin = 0
+    qmax = 2 ** num_bits - 1
+    out_channels = weight.shape[0]
+    num_groups = (out_channels + group_size - 1) // group_size
+    scales = []
+    zero_points = []
+    q_weight = torch.zeros_like(weight)
+    for g in range(num_groups):
+        start = g * group_size
+        end = min((g + 1) * group_size, out_channels)
+        w = weight[start:end]
+        min_w, max_w = w.min(), w.max()
+        scale = (max_w - min_w) / (qmax - qmin) if max_w > min_w else 1.0
+        zero_point = qmin - min_w / scale
+        zero_point = int(round(zero_point))
+        q = torch.clamp((w / scale + zero_point).round(), qmin, qmax)
+        q_weight[start:end] = q
+        scales.append(scale)
+        zero_points.append(zero_point)
+    return q_weight, torch.tensor(scales), torch.tensor(zero_points)
+
 
 @torch.no_grad()
 def quantize_activation_per_token_absmax(act, n_bits=8):
@@ -175,6 +204,7 @@ def quantize_activation_per_tensor_absmax(tensor, n_bits=8):
 
 def test():
     # weight = torch.randn([32, 32])
+    # per-channel 示例
     weight = torch.tensor([[1.0, -2.0, 3.0, -4.0],
                             [5.0, -6.0, 7.0, -8.0]], dtype=torch.float32)
     quant_w, scales = quantize_weight_per_channel_absmax(weight)
@@ -182,6 +212,11 @@ def test():
     print(quant_w)
     print(scales)
     print(f"\nquant_w and scales shape is {quant_w.shape}, {scales.shape}")
+
+    # per-group 示例
+    w = torch.randn(32, 8)  # 32个输出通道
+    q_w, scales, zero_points = per_group_quantize(w, group_size=8)
+    print(q_w.shape, scales.shape)
 
 if __name__ == "__main__":
     test()
