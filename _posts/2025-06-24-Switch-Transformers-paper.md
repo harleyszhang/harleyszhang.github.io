@@ -15,7 +15,7 @@ categories: LLM_Parallel
   - [公式4: 负载均衡损失](#公式4-负载均衡损失)
   - [公式5：实际分配比例 $f\_i$](#公式5实际分配比例-f_i)
   - [公式6：路由概率比例 $P\_i$](#公式6路由概率比例-p_i)
-  - [为什么该损失能促进负载均衡？](#为什么该损失能促进负载均衡)
+  - [为什么该损失能促进负载均衡](#为什么该损失能促进负载均衡)
 - [三 MoE 并行策略](#三-moe-并行策略)
   - [3.1 数据并行 + 张量并行](#31-数据并行--张量并行)
   - [3.2 数据并行 + 专家并行](#32-数据并行--专家并行)
@@ -32,8 +32,8 @@ categories: LLM_Parallel
 ### 1.1 All-to-All 通信
 
 llm 推理部署中的 All-to-All 通信包括：Dispatch 和 Combine 阶段。
-- Dispatch（分发阶段）：将本地数据分片发送给其他节点（例如张量的不同维度分片）。
-- Combine（聚合阶段）：从所有节点收集分片并重组为完整数据。
+- `Dispatch`（分发阶段）：将本地数据分片发送给其他节点（例如张量的不同维度分片）。
+- `Combine`（聚合阶段）：从所有节点收集分片并重组为完整数据。
 
 ### 1.2 MoE 专家并行原理
 
@@ -70,10 +70,10 @@ DeepSpeed MoE 支持五种不同形式的并行，并同时利用 GPU 和 CPU �
 2. **负载均衡损失 (Load Balancing Loss)**：由于存在 token 丢弃的风险，我们不希望路由器把所有 tokens 都发送给少数几个“热门”专家。因此，需要一个辅助的损失函数来鼓励路由器尽可能均匀地将 tokens 分配给所有专家。
 
 <div align="center">
-<img src="../../images/switch_transformer/description.webp" width="60%" alt="webp">
+<img src="../images/switch_transformer/description.webp" width="60%" alt="webp">
 </div>
 
-![load_balancing_loss](../../images/switch_transformer/load_balancing_loss.webp)
+![load_balancing_loss](../images/switch_transformer/load_balancing_loss.webp)
 
 负载均衡损失优化的完整公式如上图所示。
 
@@ -110,7 +110,7 @@ $$P_i = \frac{1}{T} \sum_{x \in B} p_i(x)$$
 + $p_i(x)$：token $x$ 分配给专家 $i$ 的软概率（由路由器输出）。
 + **物理意义**：量化路由器对专家 $i$ 的"偏好程度"。
 
-### 为什么该损失能促进负载均衡？
+### 为什么该损失能促进负载均衡
 
 + **数学性质**：当 $f_i$ 和 $P_i$ 均等于 $\frac{1}{N}$ 时，损失达到最小值 $\alpha$。
 + **反向传播作用**：
@@ -133,9 +133,9 @@ $$P_i = \frac{1}{T} \sum_{x \in B} p_i(x)$$
 
 ## 三 MoE 并行策略
 
-llm 并行推理时：数据并行 + 模型并行（张量并行），GPU 数目 = dp_size * tp_size。
+llm 并行推理时：数据并行 + 模型并行（张量并行），GPU 数量 = dp_size * tp_size。
 
-![moe_parall](../../images/switch_transformer/moe_parall.webp)
+![moe_parall](../images/switch_transformer/moe_parall.webp)
 
 ### 3.1 数据并行 + 张量并行
 
@@ -191,7 +191,7 @@ Switch Transformer 的一个巧妙设计是：如果你有 n 个计算核心（�
 + `All-to-All`**操作**：
     - **发送**：核心 `i` 会把它在上一步中收集好的、要去往专家 `j` 的那一包 tokens (`[j, C, d_model]`) 发送给核心 `j`。它会对所有 `j` 都做这个操作。
     - **接收**：同时，核心 `i` 会从所有其他核心 `j` 那里，接收它们发送过来的、要去往专家 `i` 的那一包 tokens。
-+ **最终状态**：经过 `All-to-All` 之后，在核心 `i` 上，现在汇集了**来自所有核心**的、但**目标都是专家 **`i` 的 tokens。此时，核心 `i` 就可以用它负责的专家 `i` 的权重对这些 tokens 进行计算了。数据的分片方式从按 `n`（数据并行）变成了按 `E`（专家并行）。
++ **最终状态**：经过 `All-to-All` 之后，在核心 `i` 上，现在汇集了**来自所有核心**的、但目标都是专家 `i` 的 tokens。此时，核心 `i` 就可以用它负责的专家 `i` 的权重对这些 tokens 进行计算了。数据的分片方式从按 `n`（数据并行）变成了按 `E`（专家并行）。
 
 ---
 
@@ -244,7 +244,7 @@ Switch Transformer 的一个巧妙设计是：如果你有 n 个计算核心（�
 **4. 最终状态 (专家并行)**
 
 + **GPU0** 上现在的数据是 **所有要去 E0 的 tokens**: `[t1, t3, t6]`。GPU0 现在可以调用 **专家E0** 进行计算。
-+ **GPU1** 上现在的数据是 **所有要去 E1 的 tokens**: `[t0, t2, t4, t7]` (注意，这里的数量超过了容量C，说明我的例子中t7也应该被丢弃，一个更真实的场景是容量会被严格遵守)。一个更正的例子是GPU1的包是`[t4, t7, <pad>]`，接收GPU0的包`[t0, t2, <pad>]`后，最终送入E1计算的是`[t4, t7, t0]`，t2被丢弃。
++ **GPU1** 上现在的数据是 **所有要去 E1 的 tokens**: `[t0, t2, t4, t7]` (注意，这里的数量超过了容量C，说明我的例子中 t7 也应该被丢弃，一个更真实的场景是容量会被严格遵守)。一个更正的例子是 GPU1 的包是`[t4, t7, <pad>]`，接收 GPU0 的包`[t0, t2, <pad>]`后，最终送入 E1 计算的是`[t4, t7, t0]`，t2被丢弃。
 
 计算完成后，会再有一次 `All-to-All` 将结果发送回它们原始的 token 位置。
 
