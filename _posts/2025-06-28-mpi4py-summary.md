@@ -203,7 +203,7 @@ B) 集体通信
 
 `Broadcast` 广播将一个进程中的数据发送到所有其他进程。通常用于将一个进程的消息或数据复制到所有参与者。
 
-![broadcast](../../images/mpi4py/broadcast.jpg)
+![broadcast](../images/mpi4py/broadcast.jpg)
 
 Broadcast 操作的 mpi4py 实例代码：
 
@@ -243,7 +243,7 @@ if __name__ == "__main__":
 - `Comm.Scatter`: Scatter 将一个进程中的数据分发到多个进程中。源进程将数据分成多个部分，并将每部分发送到不同的目标进程。其他进程接收并存储各自的块。`Scatter` 操作适用于将一个较大的数据集分割成多个小块。
 - `Comm.Gather` 与 `Comm.Scatter` 相反，其将多个进程中的数据汇聚到一个进程中。每个参与进程将其数据发送到指定的根进程，根进程将所有数据整合在一起。
 
-![Gather](../../images/mpi4py/Scatter-Gather.jpg)
+![Gather](../images/mpi4py/Scatter-Gather.jpg)
 
 Broadcast、Scatter、Gather 的运行实例代码如下所示：
 
@@ -346,19 +346,19 @@ mpiexec -np 4 --allow-run-as-root python mpi4py_bcast.py
 
 **Comm.Allgather 是 Comm.Gather 的进阶版**。`All Gather` 操作是将所有进程中的数据汇聚到每个进程中。每个进程不仅接收来自根进程的数据，还接收来自其他所有进程的数据。
 
-![all_gather](../../images/mpi4py/all_gather.png)
+![all_gather](../images/mpi4py/all_gather.png)
 
 `Reduce` 操作将多个进程中的数据通过某种运算（如求和、取最大值等）整合成一个结果，并将该结果发送到一个指定的根进程。
 
-![reduce](../../images/mpi4py/reduce.png)
+![reduce](../images/mpi4py/reduce.png)
 
 `All Reduce` 操作是将所有进程中的数据进行归约运算，并将结果发送到所有进程。每个进程都能获得归约后的结果。
 
-![all_reduce](../../images/mpi4py/all_reduce.png)
+![all_reduce](../images/mpi4py/all_reduce.png)
 
 三者对比图如下所示:
 
-![allreduce-allgather](../../images/mpi4py/allreduce-allgather.jpg)
+![allreduce-allgather](../images/mpi4py/allreduce-allgather.jpg)
 
 三者实例代码如下所示:
 
@@ -440,11 +440,11 @@ comm.alltoall 方法将 task j 的中 sendbuf 的第 i 个对象拷贝到 task i
 
 下图可以表示这个发送过程。
 
-![alltoall](../../images/mpi4py/alltoall.png)
+![alltoall](../images/mpi4py/alltoall.png)
 
 从发送和接收的接收的角度来理解，4个 rank 的 alltoall 的可视化过程如下图:
 
-![alltoall-4rank](../../images/mpi4py/alltoall-4rank.jpg)
+![alltoall-4rank](../images/mpi4py/alltoall-4rank.jpg)
 
 实例代码:
 
