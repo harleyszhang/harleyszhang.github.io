@@ -3,7 +3,7 @@ layout: post
 title: 张量并行技术详解
 date: 2025-04-10 19:00:00
 summary: 讲解了张量并行的原理，以及在 embedding、线性层中的应用和通讯量分析。
-categories: LLM_Infer_Optimize
+categories: LLM_Parallel
 ---
 
 - [摘要](#摘要)
