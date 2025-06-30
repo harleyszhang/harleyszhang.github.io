@@ -1,10 +1,12 @@
 ---
 layout: post
 title: MoE 专家并行详解
-date: 2025-06-30 19:00:00
+date: 2025-06-29 19:00:00
 summary: Expert 专家并行策略详解，分析 DeepSeekMoE 的专家并行策略、通信量，并分析讲解 sgalng 的专家并行代码。
 categories: LLM_Parallel
 ---
+- [DeepseekV3MoE 并行优化](#deepseekv3moe-并行优化)
+  - [DeepseekV3MoE 分组优化](#deepseekv3moe-分组优化)
 - [1. Expert 负载不均衡](#1-expert-负载不均衡)
 - [2. MoE 计算过程](#2-moe-计算过程)
 - [3. MoE 并行训练/推理策略](#3-moe-并行训练推理策略)
@@ -15,6 +17,15 @@ categories: LLM_Parallel
   - [Switch Transformers](#switch-transformers)
 - [参考资料](#参考资料)
 
+
+### DeepseekV3MoE 并行优化
+
+#### DeepseekV3MoE 分组优化
+
+DeepSeek-V3 采用了专家分组, 但是和 Device-Limited Routing 不同，其主要是用于适配 `NVLINK` 和 `IB` 带宽比 `3.2x` 上。
+
+DeepseekV3 在 AlltoAll Infra 的优化：为了保证通信库 `DualPipe` 有足够高的计算性能, DeepSeekV3 构造了一个高性能的跨节点的 `all-to-all` 通信 `Kernel`(包含了 `Dispatch` 和 `Combine`)来减少专门用于通信的 `SM` 数量。它和 `MoE Gating` 算法以及集群的网络拓扑结构协同设计。跨节点网络上的 DeepSeek 采用 400Gbps IB 互联（即 50 GB/s 的字节带宽）, 节点内 H800 的 NVLINK 单向带宽为 160GB/s(虽然理论单向带宽标称为 200GB/s，但是实际集合通信库 NCCL 大概只能跑到双向 334GB/s 的带宽，即单向带宽，差不多 160GB/s)。因此 `NVLINK : IB` 的实际带宽比值大概是 `3.2x`。
+> H800-SXM 的 NVLink （双向）互联带宽为 400GB/s, 所以理论单向带宽为 200 GB/s。
 
 ### 1. Expert 负载不均衡
 
