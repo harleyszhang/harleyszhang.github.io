@@ -1,7 +1,7 @@
 ---
 layout: post
-title: DeepseekV3 论文解析
-date: 2025-06-30 19:00:00
+title: DeepseekV3 论文解读
+date: 2025-02-08 19:00:00
 summary: DeepSeek-V3，是一个强大的混合专家（MoE）语言模型，总参数量达 6710 亿（`671B`），每个 token 激活 370 亿（`37B`）参数。为实现高效推理和经济高效的训练，和 V2 一样，DeepSeek-V3 也采用了多头潜在注意力（`MLA`）和 `DeepSeekMoE` 架构。
 categories: LLM_Parallel
 ---
