@@ -8,29 +8,29 @@ categories: Transformer
 
 - [1. 介绍](#1-介绍)
 - [2. 架构](#2-架构)
-  - [2.1 多头潜变量注意力（MLA）：提升推理效率](#21-多头潜变量注意力mla提升推理效率)
-    - [2.1.1 Standard Multi-Head Attention](#211-standard-multi-head-attention)
-    - [2.1.2 Low-Rank Key-Value Joint Compression](#212-low-rank-key-value-joint-compression)
-    - [2.1.3 Decoupled Rotary Position Embedding](#213-decoupled-rotary-position-embedding)
-    - [2.1.4 kv cache 大小的比较](#214-kv-cache-大小的比较)
-    - [2.1.5 总结](#215-总结)
-  - [2.2 DeepSeekMoE：以经济成本训练强大的模型](#22-deepseekmoe以经济成本训练强大的模型)
-    - [2.2.2. 设备受限路由（Device-Limited Routing）](#222-设备受限路由device-limited-routing)
-    - [2.2.3. 负载均衡的辅助损失（Auxiliary Loss for Load Balance）](#223-负载均衡的辅助损失auxiliary-loss-for-load-balance)
-    - [2.2.4. Token-Dropping 策略](#224-token-dropping-策略)
+	- [2.1 多头潜变量注意力（MLA）：提升推理效率](#21-多头潜变量注意力mla提升推理效率)
+		- [2.1.1 Standard Multi-Head Attention](#211-standard-multi-head-attention)
+		- [2.1.2 Low-Rank Key-Value Joint Compression](#212-low-rank-key-value-joint-compression)
+		- [2.1.3 Decoupled Rotary Position Embedding](#213-decoupled-rotary-position-embedding)
+		- [2.1.4 kv cache 大小的比较](#214-kv-cache-大小的比较)
+		- [2.1.5 总结](#215-总结)
+	- [2.2 DeepSeekMoE：以经济成本训练强大的模型](#22-deepseekmoe以经济成本训练强大的模型)
+		- [2.2.2. 设备受限路由（Device-Limited Routing）](#222-设备受限路由device-limited-routing)
+		- [2.2.3. 负载均衡的辅助损失（Auxiliary Loss for Load Balance）](#223-负载均衡的辅助损失auxiliary-loss-for-load-balance)
+		- [2.2.4. Token-Dropping 策略](#224-token-dropping-策略)
 - [参考资料](#参考资料)
 
 ## 1. 介绍
 
-DeepSeek-V2 是一种高效的开源混合专家（MoE）语言模型，基于创新的 Transformer 架构，实现了经济的训练和高效的推理。DeepSeek-V2 具有 2360 亿个参数(`236B`)，每个 token 激活 21 亿个参数，支持 `128K` tokens 的上下文长度。
+DeepSeekV2 是一种高效的开源混合专家（MoE）语言模型，基于创新的 Transformer 架构，实现了经济的训练和高效的推理。DeepSeek-V2 具有 2360 亿个参数(`236B`)，每个 token 激活 21 亿个参数，支持 `128K` tokens 的上下文长度。
 
-和 DeepSeekV1 模型结构沿用 llama 结构不同，DeepSeekV2 提出了多头潜在注意力（`MLA`）和 `DeepSeekMoE`，旨在优化 Transformer 框架中的注意力模块和前馈网络（FFNs）。
+和 DeepSeekV1 模型结构沿用 llama 结构不同，`DeepSeekV2` 提出了多头潜在注意力（`MLA`）和 `DeepSeekMoE`，旨在优化 Transformer 框架中的注意力模块和前馈网络（FFNs）。
 1. `MLA`: Multi-head Latent Attention 结构，通过**低秩键值联合压缩**，**减少了推理时的 KV 缓存**，从而提高了推理效率。
 2. `DeepSeekMoE`: `FFN`（标准 `MOE`） 的优化版。
-- **细粒度专家划分(Routed Expert)**：相比标准 MOE，DeepSeekMoE 在保持参数量不变的前提下，通过减小每个 Expert 的 `FFN` 维度，来增加 Expert 数量，进行更细粒度专家划分。
-- **共享专家隔离(Shared Expert)**: 用于表示 Routed Expert 中的共用知识信息，减少 Routed Expert 的知识冗余问题。
+   - **细粒度专家划分(`Routed Expert`)**：相比标准 MoE，`DeepSeekMoE` 在保持参数量不变的前提下，通过减小每个 Expert 的 `FFN` 维度，来增加 Expert 数量，进行**更细粒度**专家划分。
+   - **共享专家隔离(`Shared Expert`)**: 用于表示 `Routed Expert` 中的共用知识信息，减少 `Routed Expert` 的知识冗余问题。
 
-DeepSeek-V2 架构图如下所示：
+在采用专家并行训练策略的同时，论文还设计了辅助机制来控制通信开销并确保负载均衡。DeepSeek-V2 架构图如下所示：
 
 ![architecture_of_DeepSeekv2](../images/deepseekv2/architecture_of_DeepSeek-V2.png)
 
@@ -113,6 +113,23 @@ $$
 - $W^{DKV} \in \mathbb{R}^{d_c \times d}$ 是**降维投影矩阵**（down-projection matrix）；
 - $W^{UK}, W^{UV} \in \mathbb{R}^{d_h n_h \times d_c}$ 分别是 keys 和 values 的**升维投影矩阵**（up-projection matrices）。
 
+$W^{DKV}$ 在 transformers 库中的 deepseek 实现代码中是 `kv_a_proj_with_mqa` 线性层的权重，$W^{UK}$ 是 `kv_b_proj` 线性层的权重。
+
+```python
+self.kv_a_proj_with_mqa = nn.Linear(
+            self.hidden_size,
+            config.kv_lora_rank + config.qk_rope_head_dim,
+            bias=config.attention_bias,
+        )
+
+self.kv_b_proj = nn.Linear(
+	config.kv_lora_rank,
+	self.num_heads
+	* (self.q_head_dim - self.qk_rope_head_dim + self.v_head_dim),
+	bias=False,
+)
+```
+
 另外，虽然不能减少 KV Cache，但是为了**减少训练时的激活内存**（activation memory），同样也对查询（queries）也进行了**低秩压缩**（low-rank compression）。同样也是先投影到一个**低维**（`5120 -> 1536`）的 `compressed_kv` 向量（$\mathbf{c}_t^{Q}$）再升维展开得到 $\mathbf{q}_t^{C}$:
 
 $$
@@ -131,9 +148,15 @@ $$
 - $W^{DQ} \in \mathbb{R}^{d'_c \times d}$ 是查询的降维投影矩阵；
 - $W^{UQ} \in \mathbb{R}^{d_h n_h \times d'_c}$ 是查询的升维投影矩阵（up-projection matrix）。
 
+$W^{DQ}$ 在 transformers 库中的 deepseek 实现代码中是 `q_a_proj` 线性层的权重，$W^{UQ}$ 是 `q_b_proj` 线性层的权重。
+```python
+self.q_a_proj = nn.Linear(self.hidden_size, config.q_lora_rank, bias=config.attention_bias)
+self.q_b_proj = nn.Linear(config.q_lora_rank, self.num_heads * self.q_head_dim, bias=False)
+```
+
 #### 2.1.3 Decoupled Rotary Position Embedding
 
-和 DeepSeek 671B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
+和 DeepSeek671B（DeepSeek-AI, 2024）类似，作者也计划在 DeepSeek-V2 中使用旋转位置编码（RoPE, Rotary Position Embedding）（Su et al., 2024）。但是，RoPE 与**低秩 KV 压缩（low-rank KV compression）并不兼容**。
 
 具体来说，`RoPE` 对键（Key）和查询（Query）都具备**位置敏感性**（position sensitivity）。如果我们在**压缩后的键** $\mathbf{k}_t^{C}$ 上应用 `ROPE`:
 
