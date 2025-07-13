@@ -300,7 +300,7 @@ FlashAttention 核心是分块计算注意力，可以简单理解为就是将�
 论文 2.1 节明确都说了 A100 的 SRAM 大小是 192 KB，而英伟达官网给出的 A100 白皮书也明确说了 A100 的 L1 cache 大小是 192KB（ 组合共享内存和 L1 数据缓存），所以论文的 SRAM 肯定指的是 L1 cache 了。
 > “As an example, the A100 GPU has 40-80GB of high bandwidth memory (HBM) with bandwidth 1.5-2.0TB/s and 192KB of on-chip SRAM per each of 108 streaming multiprocessors with bandwidth estimated around 19TB/s [44, 45].” 
 
-
+3, 当硬件开始计算时，会先从显存（HBM）中把数据加载到片上（SRAM），在片上（SRAM）进行计算，然后将计算结果再写回显存中。
 ### 2.4 Tiling
 > computations block by block。
 
