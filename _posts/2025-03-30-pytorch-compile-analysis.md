@@ -101,6 +101,8 @@ setup(
 
 `main()` 函数的流程图如下所示：
 
+![torch_compile_mermaid-diagram](../images/pytorch_compile/mermaid-diagram.png)
+
 ```mermaid
 flowchart TD
     A[1.检查编译模式冲突] -->|BUILD_PYTHON_ONLY 和 BUILD_LIBTORCH_WHL 只能二选一| B(2.定义基础python依赖包列表)
