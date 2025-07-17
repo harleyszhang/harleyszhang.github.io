@@ -34,7 +34,7 @@ MoE 通常由两部分组成：
 混合专家（MoE）参数说明：
 
 <div align="center">
-<img src="../images/moe/moe_params.png" width="60%" alt="moe_params">
+<img src="../images/moe/moe_params.png" width="50%" alt="moe_params">
 </div>
 
 ### 1.2 DeepseekMoE 结构介绍
