@@ -1,6 +1,6 @@
 ---
 layout: post
-title: transformers 库快速入门.md
+title: transformers 库快速入门
 date: 2024-08-29 20:00:00
 summary: transformers 库快速入门, Transformers 术语总结。
 categories: Transformer
