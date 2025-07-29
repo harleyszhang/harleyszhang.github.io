@@ -526,3 +526,4 @@ Rank 1 recvbuf=
 - [集合通信入门](https://blog.niuhemoon.win/posts/tech/collective-communication-introduction/#broadcast)
 - [11.4. 集合通信](https://scale-py.godaai.org/ch-mpi/collective.html)
 - [使用Alltoall通讯](https://python-parallel-programmning-cookbook.readthedocs.io/zh-cn/latest/chapter3/17_Collective_communication_using_Alltoall.html)
+- [Writing Distributed Applications with PyTorch](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html?utm_source=pocket_saves)
