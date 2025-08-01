@@ -16,14 +16,15 @@ categories: LLM_Parallel
     - [主要实例方法（按功能归类）](#主要实例方法按功能归类)
 - [二 Broadcast](#二-broadcast)
 - [三 Reduce \& AllReduce](#三-reduce--allreduce)
-- [四 Gather \& AllGather](#四-gather--allgather)
+- [四 Gather \& AllGather \& AllReduce](#四-gather--allgather--allreduce)
+    - [Gather \& AllGather 原理和时间](#gather--allgather-原理和时间)
+  - [4.2 All-Gather 和 All-Reduce](#42-all-gather-和-all-reduce)
 - [五 Scatter \& ReduceScatter](#五-scatter--reducescatter)
 - [六 Ring AllReduce](#六-ring-allreduce)
   - [6.1 AllReduce 通信量分析](#61-allreduce-通信量分析)
   - [6.2 Barrier](#62-barrier)
-- [七 All-Gather 和 All-Reduce](#七-all-gather-和-all-reduce)
-- [八 Alltoall](#八-alltoall)
-  - [8.1 Scatter 和 Gather示例代码](#81-scatter-和-gather示例代码)
+- [七 Alltoall](#七-alltoall)
+  - [7.1 Scatter 和 Gather示例代码](#71-scatter-和-gather示例代码)
   - [8.2 Alltoall 可视化和示例](#82-alltoall-可视化和示例)
 - [参考资料](#参考资料)
 
@@ -286,9 +287,9 @@ After broadcast on rank 1: tensor([1., 2., 3., 4., 5.], device='cuda:1')
 
 ## 三 Reduce & AllReduce
 
-`Reduce` 是**分布式数据处理**中的一种基础模式，其核心思想是在各个节点上执行某个函数 `f()`（例如**求和或平均**），并将数据进行合并。
-- `Reduce` 模式下: 合并结果只发送给根节点；
-- `AllReduce 模式`: 结果则会同步到所有节点。
+`Reduce` 是**分布式数据处理**中的一种基础模式，其核心思想是在**各个节点上**执行某个函数 `f()`（例如**求和或平均**），并将数据进行合并。
+- `Reduce`: 合并结果只发送给根节点；
+- `AllReduce`: 结果则会同步到所有节点。
 
 <center>
 <img src="../images/collective_comm/a0_reduce_allreduce.png" width="80%" alt="ffn_structrue">
@@ -346,7 +347,9 @@ After reduce on rank 0: tensor([3., 3., 3., 3., 3.], device='cuda:0')
 After reduce on rank 0: tensor([3., 3., 3., 3., 3.], device='cuda:0')
 ```
 
-## 四 Gather & AllGather
+## 四 Gather & AllGather & AllReduce
+
+#### Gather & AllGather 原理和时间
 
 Gather 和 AllGather 操作本质上与 Broadcast 类似，都是在各个节点之间分发数据且不改变数据本身。但不同的是，Broadcast 是从某一个节点向所有节点广播同一个数据，而 Gather 和 AllGather 的场景中，每个节点都有一份独立的数据块：
 
@@ -426,6 +429,91 @@ After all_gather on rank 1: [tensor([1., 1., 1., 1., 1.], device='cuda:1'),
 `Gather`（收集）的“反操作”是什么呢？假设现在所有数据都集中在一个节点上：
 - 如果希望将这些**数据切分并分发**给各个节点，则可以使用 `Scatter` 操作；
 - 如果在分发前还需要先对数据进行归约处理，那就可以采用 `ReduceScatter` 模式。
+
+### 4.2 All-Gather 和 All-Reduce
+
+**Allgather 是 Gather 的进阶版**。`All Gather` 操作是将所有进程中的数据汇聚到每个进程中。每个进程不仅接收来自根进程的数据，还接收来自其他所有进程的数据。
+
+![all_gather](../images/collective_comm/all_gather.png)
+
+`Reduce` 操作将多个进程中的数据通过某种运算（如求和、取最大值等）整合成一个结果，并将该结果发送到一个指定的根进程。
+
+![reduce](../images/collective_comm/reduce.png)
+
+`All Reduce` 操作是将所有进程中的数据进行归约运算，并将结果发送到所有进程。每个进程都能获得归约后的结果。
+
+![all_reduce](../images/collective_comm/all_reduce.png)
+
+三者对比图如下所示:
+
+![allreduce-allgather](../images/collective_comm/allreduce-allgather.jpg)
+
+三者实例代码如下所示:
+
+```python
+# collective_ops.py
+from mpi4py import MPI
+import numpy as np
+
+comm = MPI.COMM_WORLD
+rank, size = comm.Get_rank(), comm.Get_size()
+
+def demo_allgather():
+    """
+    每个进程发出局部向量，所有进程都得到完整列表
+    """
+    local_vec = np.arange(rank*3, rank*3 + 3, dtype='i')  # eg Rank2->[6 7 8]
+    gathered = comm.allgather(local_vec)
+    print(f"[ALLGATHER] Rank {rank}: local={local_vec} → gathered={gathered}")
+
+def demo_reduce():
+    """
+    将标量归约到 root；这里只做求和
+    """
+    local_val = (rank + 1) ** 2          # 1,4,9,16
+    total = comm.reduce(local_val, op=MPI.SUM, root=0)
+    if rank == 0:
+        print(f"\n[REDUCE] 汇总结果 (sum) = {total}")  # 1+4+9+16=30
+
+def demo_allreduce():
+    """
+    所有进程都同时得到归约值；这里做 max
+    """
+    local_val = (rank + 1) * 2           # 2,4,6,8
+    global_max = comm.allreduce(local_val, op=MPI.MAX)
+    print(f"[ALLREDUCE] Rank {rank}: local={local_val}, global_max={global_max}")
+
+if __name__ == "__main__":
+    if rank == 0:
+        print(f"\n=== 进程总数: {size} ===\n")
+
+    comm.Barrier();  demo_allgather()
+    comm.Barrier();  demo_reduce()
+    comm.Barrier();  demo_allreduce()
+```
+
+运行命令:
+
+```bash
+mpiexec -np 4 --allow-run-as-root python mpi4py_allreduce.py 
+```
+
+输出结果:
+
+```bash
+=== 进程总数: 4 ===
+
+[ALLGATHER] Rank 0: local=[0 1 2] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
+[ALLGATHER] Rank 2: local=[6 7 8] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
+[ALLGATHER] Rank 1: local=[3 4 5] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
+[ALLGATHER] Rank 3: local=[ 9 10 11] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
+
+[REDUCE] 汇总结果 (sum) = 30
+[ALLREDUCE] Rank 0: local=2, global_max=8
+[ALLREDUCE] Rank 2: local=6, global_max=8
+[ALLREDUCE] Rank 3: local=8, global_max=8
+[ALLREDUCE] Rank 1: local=4, global_max=8
+```
 
 ## 五 Scatter & ReduceScatter
 
@@ -579,94 +667,10 @@ Rank 1 sleeps 1 seconds.
 Rank 0 after barrier time delta: 2.0025
 Rank 1 after barrier time delta: 2.0025
 ```
-## 七 All-Gather 和 All-Reduce
 
-**Comm.Allgather 是 Comm.Gather 的进阶版**。`All Gather` 操作是将所有进程中的数据汇聚到每个进程中。每个进程不仅接收来自根进程的数据，还接收来自其他所有进程的数据。
+## 七 Alltoall
 
-![all_gather](../images/collective_comm/all_gather.png)
-
-`Reduce` 操作将多个进程中的数据通过某种运算（如求和、取最大值等）整合成一个结果，并将该结果发送到一个指定的根进程。
-
-![reduce](../images/collective_comm/reduce.png)
-
-`All Reduce` 操作是将所有进程中的数据进行归约运算，并将结果发送到所有进程。每个进程都能获得归约后的结果。
-
-![all_reduce](../images/collective_comm/all_reduce.png)
-
-三者对比图如下所示:
-
-![allreduce-allgather](../images/collective_comm/allreduce-allgather.jpg)
-
-三者实例代码如下所示:
-
-```python
-# collective_ops.py
-from mpi4py import MPI
-import numpy as np
-
-comm = MPI.COMM_WORLD
-rank, size = comm.Get_rank(), comm.Get_size()
-
-def demo_allgather():
-    """
-    每个进程发出局部向量，所有进程都得到完整列表
-    """
-    local_vec = np.arange(rank*3, rank*3 + 3, dtype='i')  # eg Rank2->[6 7 8]
-    gathered = comm.allgather(local_vec)
-    print(f"[ALLGATHER] Rank {rank}: local={local_vec} → gathered={gathered}")
-
-def demo_reduce():
-    """
-    将标量归约到 root；这里只做求和
-    """
-    local_val = (rank + 1) ** 2          # 1,4,9,16
-    total = comm.reduce(local_val, op=MPI.SUM, root=0)
-    if rank == 0:
-        print(f"\n[REDUCE] 汇总结果 (sum) = {total}")  # 1+4+9+16=30
-
-def demo_allreduce():
-    """
-    所有进程都同时得到归约值；这里做 max
-    """
-    local_val = (rank + 1) * 2           # 2,4,6,8
-    global_max = comm.allreduce(local_val, op=MPI.MAX)
-    print(f"[ALLREDUCE] Rank {rank}: local={local_val}, global_max={global_max}")
-
-if __name__ == "__main__":
-    if rank == 0:
-        print(f"\n=== 进程总数: {size} ===\n")
-
-    comm.Barrier();  demo_allgather()
-    comm.Barrier();  demo_reduce()
-    comm.Barrier();  demo_allreduce()
-```
-
-运行命令:
-
-```bash
-mpiexec -np 4 --allow-run-as-root python mpi4py_allreduce.py 
-```
-
-输出结果:
-
-```bash
-=== 进程总数: 4 ===
-
-[ALLGATHER] Rank 0: local=[0 1 2] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
-[ALLGATHER] Rank 2: local=[6 7 8] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
-[ALLGATHER] Rank 1: local=[3 4 5] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
-[ALLGATHER] Rank 3: local=[ 9 10 11] → gathered=[array([0, 1, 2], dtype=int32), array([3, 4, 5], dtype=int32), array([6, 7, 8], dtype=int32), array([ 9, 10, 11], dtype=int32)]
-
-[REDUCE] 汇总结果 (sum) = 30
-[ALLREDUCE] Rank 0: local=2, global_max=8
-[ALLREDUCE] Rank 2: local=6, global_max=8
-[ALLREDUCE] Rank 3: local=8, global_max=8
-[ALLREDUCE] Rank 1: local=4, global_max=8
-```
-
-## 八 Alltoall
-
-### 8.1 Scatter 和 Gather示例代码
+### 7.1 Scatter 和 Gather示例代码
 
 Broadcast、Scatter、Gather 的运行实例代码如下所示：
 
