@@ -69,7 +69,7 @@ categories: LLM_Parallel
 
 论文借鉴了 **Mesh-TensorFlow** 的类似思想，并在计算 transformer 的 `attention` `heads` 时利用并行计算能力来实现模型并行。而且，论文提出的方法并不依赖全新的框架或编译器，而只需要在现有的 PyTorch transformer 代码实现中做几处有针对性的调整。整个方案简单易行，无需新的编译器或大规模代码重构，只需插入几个简单的 `primitives` 即可实现，具体细节会在下一节详细说明。
 
-## 3. AllReduce
+## 3. Ring-AllReduce
 
 > 集合通信（Collective Communications）基础知识可以参考我的另一篇文章。
 
