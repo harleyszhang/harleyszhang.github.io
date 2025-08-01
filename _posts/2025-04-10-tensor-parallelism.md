@@ -13,7 +13,7 @@ categories: LLM_Parallel
   - [2.2 Transformer 语言模型和多头注意力](#22-transformer-语言模型和多头注意力)
   - [2.3 深度学习中的数据和模型并行](#23-深度学习中的数据和模型并行)
   - [2.1 AllReduce 算子原理](#21-allreduce-算子原理)
-  - [2.2 Ring Allreduce 的通信成本](#22-ring-allreduce-的通信成本)
+  - [2.2 Ring AllReduce 的通信成本](#22-ring-allreduce-的通信成本)
 - [3. 模型并行 Transformers](#3-模型并行-transformers)
     - [3.1 线性层权重不同切分方式](#31-线性层权重不同切分方式)
   - [3.2 MLP 层的张量并行](#32-mlp-层的张量并行)
@@ -32,7 +32,7 @@ categories: LLM_Parallel
 
 随着模型参数量的不断扩大（模型参数内存），它们往往会超出现代处理器的内存承载能力，这就需要采用额外的内存管理策略，比如 `activation checkpointing` (Chen et al., 2016) 技术。另外常，用的优化算法 `Adam` 需要为每个参数分配额外内存来存储动量及其他状态信息（即优化器内存），这也限制了能够高效训练的模型规模。为了解决这一问题，模型并行技术通过对模型进行分割，使得各部分权重和对应的优化状态不必同时加载到同一处理器上，从而突破内存瓶颈。例如，`GPipe` (Huang et al., 2018) 和 Mesh-Tensorflow (Shazeer et al., 2018) 分别为不同类型的模型并行提供了框架，但它们**通常需要重写模型结构代码**，并依赖仍在不断完善的自定义编译器和框架。
 
-由此，[Megatron-LM 论文](https://arxiv.org/pdf/1909.08053)作者提出了一种基于 `intra-layer model-parallelism` 的简单高效的模型并行方案。直接基于 transformer 的语言模型的固有结构（即不改变模型本身结构），开发了一种在 PyTorch 中高效训练的简单模型并行实现，无需自定义 `C++` 代码或编译器。层内并行与 `GPipe` (Huang et al., 2018) 等方法所倡导的 pipeline-based model parallelism 相互独立、互补，可为大规模模型训练提供更多灵活性。
+由此，论文作者在本论文研究中提出了一种基于 `intra-layer model-parallelism` 的简单高效的模型并行方案。直接基于 transformer 的语言模型的固有结构（即不改变模型本身结构），开发了一种在 PyTorch 中高效训练的简单模型并行实现，无需自定义 `C++` 代码或编译器。层内并行与 `GPipe` (Huang et al., 2018) 等方法所倡导的 pipeline-based model parallelism 相互独立、互补，可为大规模模型训练提供更多灵活性。
 
 可以在现有的 PyTorch transformer 实现基础上，**仅需要少量针对性的代码修改**，就实现了一种简单而高效的模型并行（张量并行）方案。
 
@@ -88,25 +88,57 @@ AllReduce 的最终目标，就是让每块 GPU 上的数据都变成下图箭�
 <img src="../images/model_parallelism/all_reduce.jpg" width="70%" alt="all_reduce">
 </center>
 
-AllReduce 的实现其实分为两个过程 Reduce-Scatter 和 All-Gather，其过程可视化参考[文章](https://zhuanlan.zhihu.com/p/617133971)。
+AllReduce 的实现其实分为两个过程 Reduce-Scatter 和 All-Gather，其过程可视化图来源[文章](https://zhuanlan.zhihu.com/p/617133971)。
 
-1. 分块传输：将待传输的数据切分为 $N$ 块（N 为进程数也是设备数），形成逻辑环状结构。
-2. **Reduce-Scatter 阶段**：每个进程依次向右邻进程发送下一块数据，并进行局部聚合（如累加、累减等）。经过 $N−1$ 次传递后，每个设备上**都有一块数据**拥有了对应位置完整的聚合。
-3. AllGather 阶段：每个进程聚合后的数据块都在环中传播，按照“相邻设备对应位置进行通讯”的原则，最终所有进程获得完整结果。
+1. **分块传输**：将待传输的数据切分为 $N$ 块（N 为进程数也是设备数），形成逻辑环状结构。
+2. **`Reduce-Scatter` 阶段**：每个进程依次向右邻进程发送下一块数据，并进行局部聚合（如累加、累减等）。经过 $N−1$ 次传递后，每个设备上**都有一块数据**拥有了对应位置完整的聚合。
+3. `AllGather` 阶段：每个进程聚合后的数据块都在环中传播，按照“相邻设备对应位置进行通讯”的原则，最终所有进程获得完整结果。
+
+**Reduce-Scatter**
+
+定义网络拓扑关系，使得每个 GPU 只和其相邻的两块 GPU 通讯。每次发送对应位置的数据进行累加。每一次累加更新都形成一个拓扑环，因此被称为 `Ring`。
+
+第一次累加完毕后，蓝色位置的数据块被更新，**被更新的数据块将成为下一次更新的起点**，继续做累加操作。
 
 <center>
 <img src="../images/model_parallelism/Reduce-Scatter.png" width="70%" alt="Reduce-Scatter">
 </center>
 
+第二次累加完成后的示意图如下，同样，被更新的数据块将成为下一次更新的起点。
+
 <center>
-<img src="../images/model_parallelism/AllGather.png" width="70%" alt="AllGather">
+<img src="../images/model_parallelism/Reduce-Scatter-2.jpg" width="70%" alt="Reduce-Scatter-2">
 </center>
 
-### 2.2 Ring Allreduce 的通信成本
+第三次累加完成后的示意图如下：
 
-假设我们有 $N$ 个设备，每个设备的数据大小为 $K$，在一次 Allreduce 过程中，进行了 $N-1$ 次 `Scatter-Reduce` 操作和 $N-1$ 次 `Allgather` 操作，每一次操作所需要传递的数据大小为 $K/N$，所以整个Allreduce 过程所传输的数据大小为 $2(N-1) * K/N$，随着 $N$ 的增大，Ring Allreduce 通信算子的通信量可以近似为 $2K$。
+<center>
+<img src="../images/model_parallelism/Reduce-Scatter-3.jpg" width="70%" alt="Reduce-Scatter-3">
+</center>
 
-值得注意的是，使用张量并行加速时，**分布式系统 Allreduce 的通信速度只受限于逻辑环中最慢的两个 GPU 的连接**;（每次需要通信的数据大小仅为 $K/N$，随着 $N$ 增大，通信量减少，一般小于 network bandwidth）；总结就是 Ring Allreduce 的通信速度恒定，和设备数量无关，完全由系统中GPU 之间最慢的连接决定。
+很明显，$3$ 次更新之后，每块 `GPU` 上都有一块数据拥有了对应位置完整的累加聚合（下图中红色块）。此时，`Reduce-Scatter` 通信阶段结束。进入 `All-Gather` 通信阶段。目标是把红色块的数据广播到其余 `GPU` 对应的位置上，目的是让所有 `GPU` 最终都拥有全部的数据。
+
+**All-Gather**
+
+All-Gather 通信操作里依然按照“相邻 `GPU` 对应位置进行通讯”的原则，但对应位置数据不再做相加，而是直接替换。
+
+`All-Gather` 以红色块作为起点，第一轮更新完成后的示意图如下所示:
+
+<center>
+<img src="../images/model_parallelism/All-Gather1.jpg" width="70%" alt="All-Gather1">
+</center>
+
+同样的经过 $3$ 轮更新，使得每块 GPU 上都汇总到了完整的数据，变成如下形式:
+
+<center>
+<img src="../images/model_parallelism/All-Gather3.png" width="20%" alt="All-Gather3">
+</center>
+
+### 2.2 Ring AllReduce 的通信成本
+
+假设我们有 $N$ 个设备，每个设备的数据大小为 $K$，在一次 AllReduce 过程中，进行了 $N-1$ 次 `Scatter-Reduce` 操作和 $N-1$ 次 `Allgather` 操作，每一次操作所需要传递的数据大小为 $K/N$，所以**整个 `AllReduce` 过程所传输的数据大小为 $2(N-1) * K/N$，随着 $N$ 的增大，Ring AllReduce 通信算子的通信量可以近似为 $2K$**。
+
+值得注意的是，使用张量并行加速时，**分布式系统 AllReduce 的通信速度只受限于逻辑环中最慢的两个 GPU 的连接**;（每次需要通信的数据大小仅为 $K/N$，随着 $N$ 增大，通信量减少，一般小于 network bandwidth）；总结就是 Ring AllReduce 的通信速度恒定，和设备数量无关，完全由系统中GPU 之间最慢的连接决定。
 
 ## 3. 模型并行 Transformers
 
