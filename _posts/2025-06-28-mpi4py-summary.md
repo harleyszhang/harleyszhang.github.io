@@ -14,7 +14,7 @@ categories: LLM_Parallel
   - [1.3 mpi4py.MPI.Comm 类总结](#13-mpi4pympicomm-类总结)
     - [核心属性](#核心属性)
     - [主要实例方法（按功能归类）](#主要实例方法按功能归类)
-- [二 Broadcast](#二-broadcast)
+- [二 Broadcast 原理和实践](#二-broadcast-原理和实践)
 - [三 Reduce \& AllReduce](#三-reduce--allreduce)
 - [四 Gather \& AllGather \& AllReduce](#四-gather--allgather--allreduce)
     - [Gather \& AllGather 原理和时间](#gather--allgather-原理和时间)
@@ -207,7 +207,7 @@ B) 集体通信
 | `Reduce(sendbuf, recvbuf[, op, root])` | 归约操作到根进程                       |
 | `Allreduce(sendbuf, recvbuf[, op])`    | 全归约操作（所有进程获结果）           |
 
-## 二 Broadcast
+## 二 Broadcast 原理和实践
 
 `Broadcast` 广播将一个进程（或节点）中的数据发送到所有其他进程（节点）。通常用于将一个进程的消息或数据复制到所有参与者。
 
@@ -295,7 +295,8 @@ After broadcast on rank 1: tensor([1., 2., 3., 4., 5.], device='cuda:1')
 <img src="../images/collective_comm/a0_reduce_allreduce.png" width="80%" alt="ffn_structrue">
 </center>
 
-看上图，`f()` 函数是悬空的，毕竟，并没有哪个节点能“凭空”完成整个操作。通常，**各个节点会进行局部计算，并按照环形或树状结构协同完成任务**。举个例子：假设每个节点上都有一个数字，我们要计算它们的总和，并且节点之间按**环状相连**。第一个节点将自己的数字发送给下一个节点，后者把自己的数字加上后再传给下一个，如此反复。等这个数据在整个环中传递一圈后，第一个节点就能得到所有节点数字的总和。
+看上图，`f()` 函数是悬空的，毕竟，并没有哪个节点能“凭空”完成整个操作。通常，**各个节点会进行局部计算，并按照环形或树状结构协同完成任务**。举个例子：假设每个节点上都有一个数字，我们要计算它们的总和，并且节点之间按**环状相连**。
+> Ring（环）AllReduce 原理、可视化和通信量分析可以参考我的另一篇[文章](http://localhost:4000/2025-04-10/tensor-parallelism.html)。
 
 下述是一个简单的 `Reduce` 操作示例，用于对多个张量进行求和。通过设置 `op=dist.ReduceOp.SUM` 来指定使用的归约操作。
 
