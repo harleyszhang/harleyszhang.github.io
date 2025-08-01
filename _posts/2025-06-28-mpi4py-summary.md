@@ -767,7 +767,7 @@ mpiexec -np 4 --allow-run-as-root python mpi4py_bcast.py
 
 ### 8.2 Alltoall 可视化和示例
 
-Comm.Alltoall 是 Comm.Scatter 和 Comm.Gather 的组合，先进行 Comm.Scatter，再进行 Comm.Gather。`Alltoall` 作用：每个进程向其他所有进程发送不同的数据块，同时从所有进程接收对应的数据块。其本质是全局数据重组（如矩阵转置）。
+`Alltoall` 作用：每个进程向其他所有进程发送不同的数据块，同时从所有进程接收对应的数据块。其本质是全局数据重组（如矩阵转置）。Alltoall 是 `Scatter` 和 `Gather` 的组合，先 `Scatter`，再 `Gather`。
 
 在 mpi4py 中，有以下三种类型的 Alltoall 集体通讯。
 - comm.Alltoall(sendbuf, recvbuf)
