@@ -23,7 +23,7 @@ categories: Transformer
 - 对于小 `batch` 的模型推理，单个 token 的推理 `latency` 可能受限于 gpu 的内存带宽，即内存读取时间 > 计算时间；
 - 对于大 `batch`，单个 token 的推理 `latency` 受限于 gpu 的算力，即计算时间 > 内存读取时间。
 
-另外，本章 预填充阶段的 `Latency` 的计算忽略了读取 kv cache 的时间和读取 umembedding vector 来计算 logits 的时间**。预填充阶段对应的就是生成第一个 `token` 的过程，这个时候需要计算 `context` 的 `kv cache`，所以第一个 `token` 的 `latency` （首次延时）会比后面的 `token` （decode latency）大很多。
+另外，本章**预填充阶段的 `Latency` 的计算忽略了读取 kv cache 的时间和读取 umembedding vector 来计算 logits 的时间**。预填充阶段对应的就是生成第一个 `token` 的过程，这个时候需要计算 `context` 的 `kv cache`，所以第一个 `token` 的 `latency` （首次延时）会比后面的 `token` （decode latency）大很多。
 
 ### 前言内容
 
