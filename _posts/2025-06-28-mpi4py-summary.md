@@ -21,7 +21,7 @@ categories: LLM_Parallel
   - [4.2 All-Gather 和 All-Reduce](#42-all-gather-和-all-reduce)
 - [五 Scatter \& ReduceScatter](#五-scatter--reducescatter)
 - [六 Ring AllReduce](#六-ring-allreduce)
-  - [6.1 AllReduce 通信量分析](#61-allreduce-通信量分析)
+  - [6.1 Ring-AllReduce 通信量分析](#61-ring-allreduce-通信量分析)
   - [6.2 Barrier 概述](#62-barrier-概述)
 - [七 Alltoall](#七-alltoall)
   - [7.1 Scatter 和 Gather示例代码](#71-scatter-和-gather示例代码)
@@ -518,7 +518,7 @@ mpiexec -np 4 --allow-run-as-root python mpi4py_allreduce.py
 
 ## 五 Scatter & ReduceScatter
 
-`Scatter` 操作的作用是**将一个节点上的数据切片并分发给所有其他节点**，每个节点接收到数据的一部分。这和 Broadcast 不同，Broadcast 是将同一份完整数据复制发送给每个节点，不进行切片。而 Scatter 可以看作是 Gather 操作的反过程。
+`Scatter` 操作的作用是**将一个节点上的数据切片并分发给所有其他节点**，每个节点接收到数据的一部分。
 
 `ReduceScatter` 和 AllReduce 类似，都会对所有节点上的数据执行某种操作（如求和）。但不同的是：
 - 在 AllReduce 中，每个节点最终会接收到完整的归约结果；
@@ -634,7 +634,7 @@ Ring AllReduce 是一种专为分布式系统可扩展性设计的高效 AllRedu
 <img src="../images/collective_comm/a0_all_gather.gif" width="70%" alt="broadcast">
 </center>
 
-### 6.1 AllReduce 通信量分析
+### 6.1 Ring-AllReduce 通信量分析
 
 可能已经注意到，在 `ReduceScatter` 和 `AllGather` 两个阶段中，每个 GPU 都要进行 $N - 1$ 次发送和接收操作（共计 $2 \times (N - 1)$ 次通信），其中 $N$ 是 GPU 数量。每次传输的内容为 $\frac{K}{N}$ 个元素，$K$ 表示总共需要归约的参数数量。
 
