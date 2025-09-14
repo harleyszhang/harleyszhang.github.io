@@ -324,8 +324,8 @@ def naive_softmax(x):
 
 naive_softmax 函数实现了行级（row-wise）的 softmax 计算，通过以下步骤实现。
 
-1. `x_max = x.max(dim=1)[0]`： 为了数值稳定性，减去每一行的最大值，避免在计算 exp 时出现溢出（overflow）。x.max(dim=1) 返回每一行的最大值和对应的索引，[0] 表示只要第一部分，即取最大值那部分。
-2. `z = x - x_max[:, None]`: x 减去最大值实现数值稳定性，[:, None] 切片将 x_max 从形状 (M,) 扩展为 (M, 1)，然后广播减法。
+1. `x_max = x.max(dim=1)[0]`： x.max(dim=1) 返回每一行的最大值和对应的索引，[0] 表示只要第一部分，即取最大值那部分。
+2. `z = x - x_max[:, None]`: 为了数值稳定性，减去每一行的最大值，避免在计算 exp 时出现溢出（overflow）。[:, None] 切片将 x_max 从形状 (M,) 扩展为 (M, 1)，然后广播减法。
 3. `numerator = torch.exp(z)`：计算 exp(z) 作为分子部分 (numerator)。
 4. `denominator = numerator.sum(dim=1)`：计算每一行的和作为分母部分 (denominator)。
 5. `ret = numerator / denominator[:, None]`：分子部分除以分母部分，得到softmax 值 (ret)。
