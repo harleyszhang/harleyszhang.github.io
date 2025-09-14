@@ -258,31 +258,47 @@ for m in range(0, M, BLOCK_SIZE_M):
 如果是 triton 中实现上述地址的计算，对应代码为:
 
 ```python
-# 1，行块和列块 id，即第几个块
-pid_m = tl.program_id(axis=0) # 这里的 pid_m 就是上面的 m 变量
-pid_n = tl.program_id(axis=1)
-# 2，行和列索引范围
-# pid_m * BLOCK_SIZE_M 是块在行方向的起始行索引，加上 tl.arange(0, BLOCK_SIZE_M)[:, None] 生成的行偏移量。
-offsets_m = pid_m + tl.arange(0, BLOCK_SIZE_M)[:, None]
-# pid_n * BLOCK_SIZE_N 是块在列方向的起始列索引，加上 tl.arange(0, BLOCK_SIZE_N)[None, :] 生成的列偏移量。
-offsets_n = pid_n + tl.arange(0, BLOCK_SIZE_N)[None,:]
+@triton.jit
+def matmul_kernel(
+    A_ptr, B_ptr, C_ptr,
+    M, N, K,
+    stride_A: tl.constexpr, stride_B: tl.constexpr, stride_C: tl.constexpr,
+    BLOCK_SIZE_M: tl.constexpr, BLOCK_SIZE_N: tl.constexpr, BLOCK_SIZE_K: tl.constexpr,
+):
+    pid_m = tl.program_id(axis=0)
+    pid_n = tl.program_id(axis=1)
 
-acc = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=tl.float32)
-for k in range(0, K, BLOCK_SIZE_K):
-    offsets_ak = k + tl.arange(0, BLOCK_SIZE_K)[None,:]
-    offsets_bk = k + tl.arange(0, BLOCK_SIZE_K)[:, None]
+    # 行与列块起始索引
+    m0 = pid_m * BLOCK_SIZE_M
+    n0 = pid_n * BLOCK_SIZE_N
 
-    # offsets_m * K：跳过前 offsets_m 行，每行有 K 个元素。
-    a_idx = A_ptr + offsets_m * K + offsets_ak 
-    b_idx = B_ptr + offsets_bk * N + offsets_n
+    # 行和列的偏移 within the block
+    offs_m = m0 + tl.arange(0, BLOCK_SIZE_M)[:, None]  # shape (BLOCK_SIZE_M, 1)
+    offs_n = n0 + tl.arange(0, BLOCK_SIZE_N)[None, :]  # shape (1, BLOCK_SIZE_N)
 
-    a_block = tl.load(a_idx, mask=(offsets_m < M) & (offsets_ak < K), other=0.0)
-    b_block = tl.load(b_idx, mask=(offsets_bk < K) & (offsets_n < N), other=0.0)
-    acc = tl.dot(a_block, b_lock, acc=acc)
+    acc = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=tl.float32)
 
-# offs_m * N：跳过前 offs_m 行，每行有 N 个元素。offsets_n：当前块负责的列偏移量。
-c_idx = C_ptr + offsets_m * N + offsets_n
-tl.store(c_ptr + c_idx, acc, mask = (offsets_m < M) & (offsets < N), other=0.0)
+    for k0 in range(0, K, BLOCK_SIZE_K):
+        offs_k = k0 + tl.arange(0, BLOCK_SIZE_K)[None, :]  # shape (1, BLOCK_SIZE_K)
+        # Compute pointers for a_block and b_block, considering stride
+        # Address of A[offs_m, offs_k]:
+        a_ptrs = A_ptr + offs_m * stride_A + offs_k * 1  # 若列 stride 为 1
+        # Address of B[offs_k, offs_n]:
+        b_ptrs = B_ptr + offs_k * stride_B + offs_n * 1
+
+        # Masks for out-of-bounds
+        mask_a = (offs_m < M) & (offs_k < K)
+        mask_b = (offs_k < K) & (offs_n < N)
+
+        a_block = tl.load(a_ptrs, mask=mask_a, other=0.0)
+        b_block = tl.load(b_ptrs, mask=mask_b, other=0.0)
+
+        acc += tl.dot(a_block, b_block)
+
+    # 存储 C 块时的偏移
+    c_ptrs = C_ptr + offs_m * stride_C + offs_n * 1
+    mask_c = (offs_m < M) & (offs_n < N)
+    tl.store(c_ptrs, acc, mask=mask_c, other=0.0)
 ```
 
 `META['BLOCK_SIZE']` 表示每个块（`block`）的大小，这个值很重要，因为它直接影响到内核的并行性和性能。
@@ -378,7 +394,6 @@ RESERVED_KWS = ["num_warps", "num_stages", "num_ctas", "enable_fp_fusion", "grid
 6. `maxnreg`：用于控制每个线程块（`Block`）所能使用的最大寄存器数量
 
 ### Pytorch 与 Triton 中的地址计算对比
-
 
 | 步骤 | Python(PyTorch) | Triton |
 | --- | --- | --- |
