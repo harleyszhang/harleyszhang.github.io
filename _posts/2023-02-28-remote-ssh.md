@@ -123,7 +123,7 @@ chmod 755 ~
 chmod 700 ~/.ssh
 
 # 3. 远程主机的的公钥文件只有用户自己能读写
-chmod 600 /home/honggao/.ssh/authorized_keys
+chmod 600 ~/authorized_keys
 ```
 
 <center>
