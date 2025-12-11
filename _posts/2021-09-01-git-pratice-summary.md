@@ -93,7 +93,7 @@ git remote -v # 列出所有远程仓库信息, 包括网址
 git checkout master  # 切换回master分支(当前分支为dev)
 git merge dev  # 合并（有合并冲突的话得手动更改文件）
 ```
-2，**git**** 如何回退版本**：
+2，**git 如何回退版本**：
 
 ```bash
 git log  # 查看分支提交历史，确认要回退的历史版本
