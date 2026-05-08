@@ -3,7 +3,7 @@ layout: post
 title: 模型压缩-剪枝算法详解
 date: 2023-03-09 19:00:00
 summary: 模型剪枝是一种应用非常广的模型压缩方法，其可以直接减少模型中的参数量。本文会对模型剪枝的定义、发展历程、分类以及算法原理进行详细的介绍。
-categories: Model_Compression
+categories: Model_Quant_Compression
 ---
 
 - [一，前言](#一前言)

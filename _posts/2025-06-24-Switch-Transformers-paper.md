@@ -1,9 +1,9 @@
 ---
 layout: post
-title: Switch Transformers 论文详解
+title: LLM 并行-Switch Transformers 论文详解
 date: 2025-06-24 19:00:00
 summary: 讲解了 All-to-All 通信概念、MoE 专家并行原理、 DeepSpeed MoE 并行策略，并解析了 Switch-Transformers 在 MoE 上的并行优化策略。
-categories: LLM_Parallel
+categories: LLM_Infer_Optimize
 ---
 
 
