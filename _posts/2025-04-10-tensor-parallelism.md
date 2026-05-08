@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 张量并行技术详解
+title: LLM 并行-张量并行技术详解
 date: 2025-04-10 19:00:00
 summary: 讲解了张量并行的原理，以及在 embedding、线性层中的应用和通讯量分析。
-categories: LLM_Parallel
+categories: LLM_Infer_Optimize
 ---
 
 - [摘要](#摘要)
@@ -12,7 +12,7 @@ categories: LLM_Parallel
   - [2.1 神经语言模型预训练](#21-神经语言模型预训练)
   - [2.2 Transformer 语言模型和多头注意力](#22-transformer-语言模型和多头注意力)
   - [2.3 深度学习中的数据和模型并行](#23-深度学习中的数据和模型并行)
-- [3. AllReduce](#3-allreduce)
+- [3. Ring-AllReduce](#3-ring-allreduce)
   - [3.1 Ring-AllReduce 算子原理](#31-ring-allreduce-算子原理)
   - [3.2 Ring AllReduce 的通信成本](#32-ring-allreduce-的通信成本)
 - [4. 模型并行 Transformers](#4-模型并行-transformers)

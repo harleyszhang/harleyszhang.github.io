@@ -3,7 +3,7 @@ layout: post
 title: 深度学习模型压缩方法概述
 date: 2023-03-01 12:00:00
 summary: 工业界主流的模型压缩方法有：知识蒸馏（Knowledge Distillation，KD）轻量化模型架构（也叫紧凑的模型设计）、剪枝（Pruning）、量化（Quantization）。
-categories: Model_Compression
+categories: Model_Quant_Compression
 ---
 
 - [一，模型压缩技术概述](#一模型压缩技术概述)

@@ -3,7 +3,7 @@ layout: post
 title: SmoothQuant 量化详解
 date: 2024-10-29 23:00:00
 summary: 详细总结了 LLM 量化的难点：激活值中出现在特定通道的离群值使得激活值分布不均值导致激活难以量化，并给出了SmoothQuant 算法原理的详细描述。
-categories: LLM_Compression
+categories: Model_Quant_Compression
 ---
 
 - [摘要](#摘要)

@@ -3,7 +3,7 @@ layout: post
 title: 基于 pytorch 实现模型剪枝
 date: 2023-03-12 19:00:00
 summary: 所谓模型剪枝，其实是一种从神经网络中移除"不必要"权重或偏差（weigths/bias）的模型压缩技术。关于什么参数才是“不必要的”，这是一个目前依然在研究的领域。
-categories: Model_Compression
+categories: Model_Quant_Compression
 ---
 
 - [一，剪枝分类](#一剪枝分类)

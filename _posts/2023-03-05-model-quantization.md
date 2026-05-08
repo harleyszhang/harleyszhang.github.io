@@ -3,7 +3,7 @@ layout: post
 title: 模型压缩-神经网络量化基础
 date: 2023-03-05 19:00:00
 summary: 总结线性量化优点、原理、方法和实战基础。
-categories: Model_Compression
+categories: Model_Quant_Compression
 ---
 
 - [一 模型量化概述](#一-模型量化概述)

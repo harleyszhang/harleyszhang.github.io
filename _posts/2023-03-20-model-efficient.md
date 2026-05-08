@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 模型压缩-轻量化网络总结
+title: 模型压缩-轻量化 CNN 网络总结
 date: 2023-03-20 19:00:00
 summary: 轻量级网络的核心是在尽量保持精度的前提下，从模型体积和速度两方面对网络进行轻量化改造。
-categories: Model_Compression
+categories: Model_Quant_Compression
 ---
 
 - [前言](#前言)
