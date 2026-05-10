@@ -178,9 +178,9 @@ kernelB<<<gridB, blockB, 0, streamB>>>(...);
 
 上述代码表达的是：kernelA 在 streamA 中运行，当 kernelA 前面的工作执行到 event 时，记录这个事件，streamB 等待该事件完成后，再启动 kernelB。这样做的好处是，依赖关系只约束必要的部分，不会把整个设备都停下来。
 
-Event 和同步的关系
-- cudaDeviceSynchronize()：等待整个设备上的工作完成
-- cudaStreamSynchronize(stream)：等待某个 stream 完成
-- cudaEventSynchronize(event)：等待某个 event 完成
-- cudaStreamWaitEvent(stream, event)：让一个 stream 等另一个 stream 的事件
+**Event 和同步的关系**:
+- `cudaDeviceSynchronize()`：等待整个设备上的工作完成
+- `cudaStreamSynchronize(stream)`：等待某个 stream 完成
+- `cudaEventSynchronize(event)`：等待某个 event 完成
+- `cudaStreamWaitEvent`(stream, event)：让一个 stream 等另一个 stream 的事件
 
