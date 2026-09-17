@@ -79,7 +79,7 @@ TensorRT-LLM 量化方法主要包括三个核心部分：
 
 在相同的延迟预算下，使用 `XQA` 优化后，`Llama-70B` 在 `H200` 上的吞吐量提升可达 2.4 倍。
 
-|Model     |GPUs | Input Length | Output Length | Throughput w/o XQA (tok/s/GPU) | Throughput w/ XQA (tok/s/GPU) | Speedup |
+|Model     |GPUs | Input Length | Output Length | Throughput w/o XQA (token/s/GPU) | Throughput w/ XQA (token/s/GPU) | Speedup |
 |:---------|:----|:-------------|:--------------|:-------------------|:------------------|:--------|
 |Llama-70B |   1 |          128 |          2048 |              1,227 |             2,941 | 2.4x
 |          |   8 |          128 |          2048 |             13,232 |            25,300 | 1.9x
