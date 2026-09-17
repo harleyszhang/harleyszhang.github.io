@@ -123,7 +123,7 @@ git branch
 
 ## 二 git 工业界实战操作
 
-1, 合并远程 master 分支到本地分支 dev/model_compare
+**1, 合并远程 master 分支到本地分支 dev/model_compare**
 
 ```bash
 git fetch origin # 拉取最新远程更改
@@ -133,7 +133,9 @@ git push origin dev/model_compare --force-with-lease
 git log --oneline --graph
 ```
 
-2, 关于多个 commit 注释信息需要的经验。
+![git rebase show](../images/git_pratice/git_rebase_show.jpg)
+
+**2, 关于多个 commit 注释信息需要的经验**。
 
 合并三个 commit, 第一个 commit 必须是 pick，如果想要保留后面最后一个的 commit 信息，则倒数第二个 commit 设为 f, 最后的 commit 改为 s 即可，然后进入 commit 注释修改界面，把第一个 commit 注释信息加 `#` 注释掉即可。
 
@@ -156,7 +158,7 @@ git rebase -i HEAD~3
 # d, drop = remove commit
 ```
 
-3, 本地仓库恢复到某个历史状态
+**3, 本地仓库恢复到某个历史状态**
 
 ```bash
 git reflog # 显示本地所有对 HEAD （当前分支指针）的操作日志。
@@ -169,7 +171,7 @@ git reset --soft HEAD^ HEAD^ 表示上一个提交。--soft：只移动 HEAD，�
 - `HEAD@{0}` 总是指向当前的 HEAD。
 - `HEAD@{1}` 是上一次 HEAD 移动前的位置，依此类推。
 
-4，将远程分支 feature 的指定目录/文件的修改合并到本地分支 develop 
+**4，将远程分支 feature 的指定目录/文件的修改合并到本地分支 develop**
 
 ```bash
 git checkout develop # 切换到本地目标分支
@@ -181,7 +183,7 @@ git commit -m "Merge src/utils from origin/feature into develop"
 git push origin develop # 推送到远程 
 ```
 
-5, git 配置用户名和邮箱
+**5, git 配置仓库的用户名和邮箱**
 
 ```bash
 
