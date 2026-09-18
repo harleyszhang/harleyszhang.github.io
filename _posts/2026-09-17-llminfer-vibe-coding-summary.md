@@ -1,6 +1,5 @@
 ---
-layout: 
-post
+layout: post
 title: llm infewr 的 vibe coding 经验全汇总
 date: 2026-09-17 17:00:00
 summary: 总结了：推理服务框架开发提示词集合、框架代码详解/文档优化提示词集合和AI 代码治理和编程经验总结。
